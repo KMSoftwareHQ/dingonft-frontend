@@ -23,6 +23,7 @@ import {
   faSearch,
   faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { link } from "./utils";
 
 function ExploreCollectionsController() {
   const location = useLocation();
@@ -63,7 +64,7 @@ function ExploreCollectionsController() {
     e.nativeEvent.stopImmediatePropagation();
 
     if (search.trim() !== "") {
-      window.location.assign(`/collections/search?query=${search.trim()}`);
+      window.location.assign(link(`/collections/search?query=${search.trim()}`));
     }
   };
 
@@ -80,19 +81,19 @@ function ExploreCollectionsController() {
           <div>
             <Nav variant="tabs" className="custom-nav-tabs mt-4 constant-width">
               <Nav.Item className="ms-auto text-center">
-                <Nav.Link href="/collections/" active={view === "hot"}>
+                <Nav.Link href={link("/collections/")} active={view === "hot"}>
                   <FontAwesomeIcon icon={faBolt} className="me-2" />
                   Trending
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="text-center">
-                <Nav.Link href="/collections/top" active={view === "top"}>
+                <Nav.Link href={link("/collections/top")} active={view === "top"}>
                   <FontAwesomeIcon icon={faFire} className="me-2" />
                   Top
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="me-auto text-center">
-                <Nav.Link href="/collections/search" active={view === "search"}>
+                <Nav.Link href={link("/collections/search")} active={view === "search"}>
                   <FontAwesomeIcon icon={faSearch} className="me-2" />
                   Search
                 </Nav.Link>
@@ -105,7 +106,7 @@ function ExploreCollectionsController() {
               <Tab.Content>
                 <ul className="collection-cards-container mt-4">
                   {collectionList.map((x) => (
-                    <a key={x} href={`/collection/${x}`}>
+                    <a key={x} href={link(`/collection/${x}`)}>
                       <CollectionCard handle={x} />
                     </a>
                   ))}
@@ -160,7 +161,7 @@ function ExploreCollectionsController() {
                     {searchEntries !== undefined &&
                       searchEntries !== null &&
                       searchEntries.map((x) => (
-                        <a key={x} href={`/collection/${x}`}>
+                        <a key={x} href={link(`/collection/${x}`)}>
                           <CollectionCard handle={x} />
                         </a>
                       ))}

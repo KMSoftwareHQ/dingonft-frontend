@@ -23,6 +23,7 @@ import {
   faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import NFTCard from "./NFTCard";
+import { link } from "./utils";
 
 function ExploreNftsController() {
   const location = useLocation();
@@ -67,7 +68,7 @@ function ExploreNftsController() {
     e.nativeEvent.stopImmediatePropagation();
 
     if (search.trim() !== "") {
-      window.location.assign(`/nfts/search?query=${search.trim()}`);
+      window.location.assign(link(`/nfts/search?query=${search.trim()}`));
     }
   };
 
@@ -124,13 +125,13 @@ function ExploreNftsController() {
           <div>
             <Nav variant="tabs" className="custom-nav-tabs mt-4 constant-width">
               <Nav.Item className="ms-auto text-center">
-                <Nav.Link href="/nfts" active={view === "all"}>
+                <Nav.Link href={link("/nfts")} active={view === "all"}>
                   <FontAwesomeIcon icon={faList} className="me-2" />
                   All NFTs
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="me-auto text-center">
-                <Nav.Link href="/nfts/search" active={view === "search"}>
+                <Nav.Link href={link("/nfts/search")} active={view === "search"}>
                   <FontAwesomeIcon icon={faSearch} className="me-2" />
                   Search
                 </Nav.Link>
@@ -178,7 +179,7 @@ function ExploreNftsController() {
                 <ul className="cards-container mt-4">
                   {nftList !== null &&
                     nftList.map((x) => (
-                      <a key={x.address} href={`/nft/${x.address}`}>
+                      <a key={x.address} href={link(`/nft/${x.address}`)}>
                         <NFTCard address={x.address} />
                       </a>
                     ))}
@@ -236,7 +237,7 @@ function ExploreNftsController() {
                     {searchEntries !== undefined &&
                       searchEntries !== null &&
                       searchEntries.map((x) => (
-                        <a key={x.address} href={`/nft/${x}`}>
+                        <a key={x.address} href={link(`/nft/${x}`)}>
                           <NFTCard address={x} />
                         </a>
                       ))}

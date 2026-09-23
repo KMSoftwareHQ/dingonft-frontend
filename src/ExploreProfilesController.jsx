@@ -23,6 +23,7 @@ import {
   faCoins,
 } from "@fortawesome/free-solid-svg-icons";
 import ProfileCard from "./ProfileCard";
+import { link } from "./utils";
 
 function ExploreProfilesController() {
   const location = useLocation();
@@ -63,7 +64,7 @@ function ExploreProfilesController() {
     e.nativeEvent.stopImmediatePropagation();
 
     if (search.trim() !== "") {
-      window.location.assign(`/profiles/search?query=${search.trim()}`);
+      window.location.assign(link(`/profiles/search?query=${search.trim()}`));
     }
   };
 
@@ -80,14 +81,14 @@ function ExploreProfilesController() {
           <div>
             <Nav variant="tabs" className="custom-nav-tabs mt-4">
               <Nav.Item className="ms-auto text-center">
-                <Nav.Link href="/profiles" active={view === "influence"}>
+                <Nav.Link href={link("/profiles")} active={view === "influence"}>
                   <FontAwesomeIcon icon={faBullseye} className="me-2" />
                   Influence
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="text-center">
                 <Nav.Link
-                  href="/profiles/earnings"
+                  href={link("/profiles/earnings")}
                   active={view === "earnings"}
                 >
                   <FontAwesomeIcon icon={faCoins} className="me-2" />
@@ -95,7 +96,7 @@ function ExploreProfilesController() {
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="me-auto text-center">
-                <Nav.Link href="/profiles/search" active={view === "search"}>
+                <Nav.Link href={link("/profiles/search")} active={view === "search"}>
                   <FontAwesomeIcon icon={faSearch} className="me-2" />
                   Search
                 </Nav.Link>
@@ -109,7 +110,7 @@ function ExploreProfilesController() {
                 <ul className="profile-cards-container mt-4">
                   {profileList !== null &&
                     profileList.map((x) => (
-                      <a key={x} href={`/profile/${x}`}>
+                      <a key={x} href={link(`/profile/${x}`)}>
                         <ProfileCard address={x} />
                       </a>
                     ))}
@@ -164,7 +165,7 @@ function ExploreProfilesController() {
                     {searchEntries !== undefined &&
                       searchEntries !== null &&
                       searchEntries.map((x) => (
-                        <a key={x} href={`/profile/${x}`}>
+                        <a key={x} href={link(`/profile/${x}`)}>
                           <ProfileCard address={x} />
                         </a>
                       ))}

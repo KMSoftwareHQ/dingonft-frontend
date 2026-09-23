@@ -1,0 +1,47 @@
+# Local dev environment. `docker compose up -d` then open
+# http://localhost:3020/testing-nft-platform/ (also served, IP-locked, at
+# https://ccnodes.net/testing-nft-platform/ via the ccnodes.net Caddy config).
+# API and storage come from the dingonft-provider dev stack, so start that first
+# (`docker compose up -d` in ../dingonft-provider). Override values in a .env
+# file (see .env.example).
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    # Run as the host user, not root: root's 128 inotify instances are used up
+    # by the rest of this box (dev server then dies with EMFILE on fs.watch),
+    # and files the container writes into the bind mount stay user-owned.
+    user: "${DEV_UID:-1001}:${DEV_GID:-1001}"
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3020}:3000"
+    environment:
+      BROWSER: none
+      HOME: /tmp
+      # App is served under this sub-path (router basename, assets, links).
+      PUBLIC_URL: ${BASE_PATH:-/testing-nft-platform}
+      # Hot-reload websocket under the sub-path so the edge proxy carries it.
+      WDS_SOCKET_PATH: ${BASE_PATH:-/testing-nft-platform}/sockjs-node
+      # Browser-side URLs: same-origin paths served by src/setupProxy.js.
+      REACT_APP_STORAGE_BASE: ${BASE_PATH:-/testing-nft-platform}/storage
+      REACT_APP_API_URL: ${BASE_PATH:-/testing-nft-platform}/api
+      # The provider dev stack names its buckets dingo-nft-* (prod: dingo-nftc-0-*).
+      REACT_APP_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nft-}
+      # Server-side proxy targets, by container name on the provider's network.
+      DEV_STORAGE_PROXY_TARGET: ${DEV_STORAGE_PROXY_TARGET:-http://dingonft-provider-minio-1:9000}
+      DEV_API_PROXY_TARGET: ${DEV_API_PROXY_TARGET:-http://dingonft-provider-app-1:80}
+    networks:
+      - default
+      - dingonft-provider
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+networks:
+  # dingonft-provider's compose network (API, MinIO, Postgres, dingocoind).
+  dingonft-provider:
+    name: dingonft-provider_default
+    external: true
+
+volumes:
+  node_modules:

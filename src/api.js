@@ -1,7 +1,6 @@
 import { post } from "./utils";
 
-const API_URL = "api_url";
-//const API_URL = "http://localhost:33332";
+const API_URL = process.env.REACT_APP_API_URL || "api_url";
 
 const getBusy = async (data) => {
   const result = await post(`${API_URL}/nft/getBusy`, {

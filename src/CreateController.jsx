@@ -16,7 +16,7 @@ import Hex from "crypto-js/enc-hex";
 import Base64 from "crypto-js/enc-base64";
 import GetWalletModal from "./GetWalletModal";
 import { sendListTransaction, getListTransaction } from "./api";
-import { toSatoshi } from "./utils";
+import { toSatoshi, link } from "./utils";
 
 const isWebp = (buffer) => {
   if (!buffer || buffer.length < 12) {
@@ -396,7 +396,7 @@ function CreateController() {
                   NFT Address: <b>{address}</b>
                 </p>
                 <div style={{ textAlign: "center" }}>
-                  <a href={"/nft/" + address}>
+                  <a href={link("/nft/" + address)}>
                     <Button className="popup-button px-4" variant="primary">
                       View NFT ►
                     </Button>

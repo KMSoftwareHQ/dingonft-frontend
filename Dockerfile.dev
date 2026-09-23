@@ -1,0 +1,6 @@
+# Dev image for `docker compose up`: CRA dev server with hot reload.
+# Node 16 is required; react-scripts 4 breaks on Node 17+ (OpenSSL 3).
+FROM node:16-bullseye
+WORKDIR /app
+EXPOSE 3000
+CMD ["sh", "-c", "yarn install --frozen-lockfile --non-interactive && yarn start"]

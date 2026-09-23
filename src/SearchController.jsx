@@ -25,6 +25,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import NFTCard from "./NFTCard";
 import ProfileCard from "./ProfileCard";
+import { link } from "./utils";
 
 function SearchController() {
   const location = useLocation();
@@ -49,7 +50,7 @@ function SearchController() {
     e.nativeEvent.stopImmediatePropagation();
 
     if (search.trim() !== "") {
-      window.location.assign(`/search?query=${search.trim()}`);
+      window.location.assign(link(`/search?query=${search.trim()}`));
     }
   };
 
@@ -145,7 +146,7 @@ function SearchController() {
                 )}
                 {searchNfts !== null &&
                   searchNfts.map((x) => (
-                    <a key={x.address} href={`/nft/${x}`}>
+                    <a key={x.address} href={link(`/nft/${x}`)}>
                       <NFTCard address={x} />
                     </a>
                   ))}
@@ -167,7 +168,7 @@ function SearchController() {
                 )}
                 {searchCollections !== null &&
                   searchCollections.map((x) => (
-                    <a key={x} href={`/collection/${x}`}>
+                    <a key={x} href={link(`/collection/${x}`)}>
                       <CollectionCard handle={x} />
                     </a>
                   ))}
@@ -189,7 +190,7 @@ function SearchController() {
                 )}
                 {searchProfiles !== null &&
                   searchProfiles.map((x) => (
-                    <a key={x} href={`/profile/${x}`}>
+                    <a key={x} href={link(`/profile/${x}`)}>
                       <ProfileCard address={x} />
                     </a>
                   ))}

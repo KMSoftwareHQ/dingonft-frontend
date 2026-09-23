@@ -1,8 +1,19 @@
-const META_BUCKET = "https://dingo-nftc-0-meta.nyc3.digitaloceanspaces.com";
-const PREVIEW_BUCKET = "https://dingo-nftc-0-preview.nyc3.digitaloceanspaces.com";
-const STATE_BUCKET = "https://dingo-nftc-0-state.nyc3.digitaloceanspaces.com";
-const PROFILE_BUCKET = "https://dingo-nftc-0-profile.nyc3.digitaloceanspaces.com";
-const COLLECTION_BUCKET = "https://dingo-nftc-0-collection.nyc3.digitaloceanspaces.com";
+// REACT_APP_STORAGE_BASE switches to a path-style S3 endpoint (e.g. the
+// dingonft-provider dev MinIO) where buckets are URL paths.
+// REACT_APP_STORAGE_BUCKET_PREFIX matches the backend's bucket names.
+const STORAGE_BASE = process.env.REACT_APP_STORAGE_BASE;
+const BUCKET_PREFIX =
+  process.env.REACT_APP_STORAGE_BUCKET_PREFIX || "dingo-nftc-0-";
+const bucket = (name) =>
+  STORAGE_BASE
+    ? `${STORAGE_BASE}/${BUCKET_PREFIX}${name}`
+    : `https://${BUCKET_PREFIX}${name}.nyc3.digitaloceanspaces.com`;
+
+const META_BUCKET = bucket("meta");
+const PREVIEW_BUCKET = bucket("preview");
+const STATE_BUCKET = bucket("state");
+const PROFILE_BUCKET = bucket("profile");
+const COLLECTION_BUCKET = bucket("collection");
 
 const get = (link) => {
   const controller = new AbortController();

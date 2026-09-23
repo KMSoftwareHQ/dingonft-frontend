@@ -61,4 +61,8 @@ const get = (link) => {
   });
 };
 
-export { toSatoshi, toLocaleString, satoshiToLocaleString, post, get };
+// Prefix an app-absolute path with PUBLIC_URL (empty in production) so the app
+// also works when served under a sub-path, e.g. /testing-nft-platform.
+const link = (path) => `${process.env.PUBLIC_URL}${path}`;
+
+export { link, toSatoshi, toLocaleString, satoshiToLocaleString, post, get };

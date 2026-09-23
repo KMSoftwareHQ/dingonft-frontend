@@ -1,7 +1,7 @@
 import React from "react";
 import { getMeta, getPreviewLink, getState } from "./storage";
 import { Card } from "react-bootstrap";
-import { satoshiToLocaleString } from "./utils";
+import { satoshiToLocaleString, link } from "./utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCashRegister,
@@ -100,8 +100,8 @@ function NFTCard(props) {
         </Card.Title>
         <Card.Subtitle className="text-start">
           {(collection === undefined || profile === undefined) && <span>&nbsp;</span>}
-          {collection !== undefined && collection !== null && (<div className="text-truncate"><b>In</b> <a className="simple-link" href={`/collection/${collection.handle}`}>{collection.name}</a></div>)}
-          {profile !== undefined && profile !== null && (<div className="text-truncate"><b>By</b> <a className="simple-link" href={`/profile/${profile.address}`}>{profile.name || profile.address}</a></div>)}
+          {collection !== undefined && collection !== null && (<div className="text-truncate"><b>In</b> <a className="simple-link" href={link(`/collection/${collection.handle}`)}>{collection.name}</a></div>)}
+          {profile !== undefined && profile !== null && (<div className="text-truncate"><b>By</b> <a className="simple-link" href={link(`/profile/${profile.address}`)}>{profile.name || profile.address}</a></div>)}
         </Card.Subtitle>
         <Card.Text>
           <span className="card-price">
