@@ -9,12 +9,13 @@ const detectFileType = require("detect-file-type");
 const util = require('util');
 
 const S3_CONFIG = {
-  endpoint: "",
-  region: "",
+  endpoint: process.env.S3_ENDPOINT || "",
+  region: process.env.S3_REGION || "",
   credentials: {
-    accessKeyId: "",
-    secretAccessKey: "",
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
   },
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 };
 const META_BUCKET = "dingo-nft-meta";
 const PREVIEW_BUCKET = "dingo-nft-preview";

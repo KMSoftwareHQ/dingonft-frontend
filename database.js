@@ -67,7 +67,7 @@ module.exports = {
 };
 
 async function load() {
-  db = new pg.Client('postgres://dingo:dingopassword@localhost:5432/dingo');
+  db = new pg.Client(process.env.DATABASE_URL || 'postgres://dingo:dingopassword@localhost:5432/dingo');
   await db.connect();
 }
 

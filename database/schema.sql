@@ -1,12 +1,14 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 DROP TABLE IF EXISTS profiles;
 CREATE TABLE IF NOT EXISTS profiles (
   id SERIAL PRIMARY KEY,
   owner TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL DEFAULT ''
+  name TEXT NOT NULL DEFAULT '',
+  thumbnail TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_owner ON profiles (owner);
 CREATE INDEX IF NOT EXISTS idx_profiles_name ON profiles (name);
-CREATE INDEX IF NOT EXISTS idx_profiles_description ON profiles (description);
 
 DROP TABLE IF EXISTS collections;
 CREATE TABLE IF NOT EXISTS collections (
@@ -27,7 +29,8 @@ CREATE TABLE IF NOT EXISTS assets (
   contentHash TEXT UNIQUE NOT NULL,
   address TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL DEFAULT '',
-  tags TEXT NOT NULL DEFAULT ''
+  tags TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_assets_collection ON assets (collection);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_contentHash ON assets (contentHash);
@@ -81,7 +84,9 @@ CREATE TABLE IF NOT EXISTS profileStats (
   tradeHeight INTEGER,
   tradeCount INTEGER NOT NULL,
   sellVolume TEXT NOT NULL,
-  buyVolume TEXT NOT NULL
+  buyVolume TEXT NOT NULL,
+  listSoldCount INTEGER NOT NULL DEFAULT 0,
+  royaltyVolume TEXT NOT NULL DEFAULT '0'
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profileStats_owner ON profileStats (owner);
 CREATE INDEX IF NOT EXISTS idx_profileStats_firstListHeight ON profileStats (firstListHeight);

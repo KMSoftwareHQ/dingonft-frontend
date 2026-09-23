@@ -6,8 +6,9 @@ const crypto = require('crypto');
 const Web3Utils = require("web3-utils");
 const os = require("os");
 
-const DINGO_COOKIE_PATH = '/home/dingo/.dingocoin/.cookie'.replace('~', os.homedir);
-const DINGO_PORT = 34646;
+const DINGO_COOKIE_PATH = (process.env.DINGO_COOKIE_PATH || '/home/dingo/.dingocoin/.cookie').replace('~', os.homedir);
+const DINGO_HOST = process.env.DINGO_RPC_HOST || 'localhost';
+const DINGO_PORT = parseInt(process.env.DINGO_RPC_PORT || '34646');
 
 module.exports = {
   toSatoshi,
@@ -46,7 +47,7 @@ function getCookie() {
 async function callRpc(method, params) {
   const cookie = getCookie();
   const options = {
-      url: "http://localhost:" + DINGO_PORT.toString(),
+      url: "http://" + DINGO_HOST + ":" + DINGO_PORT.toString(),
       method: "post",
       headers: { "content-type": "text/plain" },
       auth: { user: cookie.user, pass: cookie.password },
