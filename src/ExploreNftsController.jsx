@@ -1,5 +1,4 @@
 import {
-  div,
   Tab,
   Nav,
   Button,
@@ -60,7 +59,7 @@ function ExploreNftsController() {
         }
       }
     })();
-  }, []);
+  }, [location.search, view]);
 
   const doSearch = async (e) => {
     e.preventDefault();

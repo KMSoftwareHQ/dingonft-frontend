@@ -17,16 +17,14 @@ services:
       - "127.0.0.1:${FRONTEND_PORT:-3020}:3000"
     environment:
       BROWSER: none
-      HOME: /tmp
-      # App is served under this sub-path (router basename, assets, links).
-      PUBLIC_URL: ${BASE_PATH:-/testing-nft-platform}
-      # Hot-reload websocket under the sub-path so the edge proxy carries it.
-      WDS_SOCKET_PATH: ${BASE_PATH:-/testing-nft-platform}/sockjs-node
-      # Browser-side URLs: same-origin paths served by src/setupProxy.js.
-      REACT_APP_STORAGE_BASE: ${BASE_PATH:-/testing-nft-platform}/storage
-      REACT_APP_API_URL: ${BASE_PATH:-/testing-nft-platform}/api
+      npm_config_cache: /tmp/npm-cache
+      # Vite base path controls the router, assets, links, and HMR endpoint.
+      BASE_PATH: ${BASE_PATH:-/testing-nft-platform}
+      # Browser-side URLs: same-origin paths served by Vite's dev proxy.
+      VITE_STORAGE_BASE: ${BASE_PATH:-/testing-nft-platform}/storage
+      VITE_API_URL: ${BASE_PATH:-/testing-nft-platform}/api
       # The provider dev stack names its buckets dingo-nft-* (prod: dingo-nftc-0-*).
-      REACT_APP_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nft-}
+      VITE_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nft-}
       # Server-side proxy targets, by container name on the provider's network.
       DEV_STORAGE_PROXY_TARGET: ${DEV_STORAGE_PROXY_TARGET:-http://dingonft-provider-minio-1:9000}
       DEV_API_PROXY_TARGET: ${DEV_API_PROXY_TARGET:-http://dingonft-provider-app-1:80}

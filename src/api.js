@@ -1,6 +1,6 @@
 import { post } from "./utils";
 
-const API_URL = process.env.REACT_APP_API_URL || "api_url";
+const API_URL = import.meta.env.VITE_API_URL || "api_url";
 
 const getBusy = async (data) => {
   const result = await post(`${API_URL}/nft/getBusy`, {
@@ -128,11 +128,11 @@ const queryProfileBySearch = (data) => {
   });
 };
 
-const queryProfileByTradeCount = (data) => {
+const queryProfileByTradeCount = () => {
   return post(`${API_URL}/profile/queryByTradeCount`, {});
 };
 
-const queryProfileByEarnings = (data) => {
+const queryProfileByEarnings = () => {
   return post(`${API_URL}/profile/queryByEarnings`, {});
 };
 

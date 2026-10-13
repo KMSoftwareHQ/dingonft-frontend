@@ -1,5 +1,3 @@
-/* global BigInt */
-
 import {
   Button,
   Form,
@@ -10,8 +8,7 @@ import {
   Spinner
 } from "react-bootstrap";
 import React from "react";
-import Sha256 from "crypto-js/sha256";
-import Hex from "crypto-js/enc-hex";
+import { sha256Hex } from "./crypto";
 import { getMeta, getState, getProfile, getPreviewLink } from "./storage";
 import { toSatoshi, link } from "./utils";
 import NFTCard from "./NFTCard";
@@ -113,7 +110,7 @@ function ProfileController() {
         setProfile(profile);
       })();
     }
-  }, []);
+  }, [profileAddress, view]);
 
   // Initialize for profile view (cretions).
   React.useEffect(() => {
@@ -134,7 +131,7 @@ function ProfileController() {
         setUnassignedList(unassignedList.reverse());
       })();
     }
-  }, []);
+  }, [profileAddress, view]);
 
   // Initialize for profileOwned view.
   React.useEffect(() => {
@@ -153,17 +150,16 @@ function ProfileController() {
         });
       })();
     }
-  }, []);
+  }, [profileAddress, view]);
 
   // Initialize for profileStats view.
   React.useEffect(() => {
     if (view === "profileStats") {
       (async () => {
         setProfileStats(await getProfileStats({ owner: profileAddress }));
-        console.log(await getProfileStats({ owner: profileAddress }));
       })();
     }
-  }, []);
+  }, [profileAddress, view]);
 
   // Initialize for collection view.
   React.useEffect(() => {
@@ -183,7 +179,7 @@ function ProfileController() {
         );
       }
     })();
-  }, []);
+  }, [collectionHandle, view]);
 
   // Initialize for nft view.
   React.useEffect(() => {
@@ -230,7 +226,7 @@ function ProfileController() {
         setNftBusy(await getBusy({ address: nftAddress }));
       }
     })();
-  }, []);
+  }, [nftAddress, view]);
 
   // Effect for NFT view.
   React.useEffect(() => {
@@ -274,7 +270,7 @@ function ProfileController() {
     const message = JSON.stringify(payload);
 
     const signResult = await window.dingo.requestSign(
-      Hex.stringify(Sha256(message))
+      await sha256Hex(message)
     );
     if (signResult.error !== undefined) {
       return;
@@ -303,7 +299,7 @@ function ProfileController() {
 
     // Sign.
     const signResult = await window.dingo.requestSign(
-      Hex.stringify(Sha256(message))
+      await sha256Hex(message)
     );
     if (signResult.error !== undefined) {
       return;
@@ -332,7 +328,7 @@ function ProfileController() {
 
     // Sign.
     const signResult = await window.dingo.requestSign(
-      Hex.stringify(Sha256(message))
+      await sha256Hex(message)
     );
     if (signResult.error !== undefined) {
       return;
@@ -359,7 +355,7 @@ function ProfileController() {
 
     // Sign.
     const signResult = await window.dingo.requestSign(
-      Hex.stringify(Sha256(message))
+      await sha256Hex(message)
     );
     if (signResult.error !== undefined) {
       return;
@@ -387,7 +383,7 @@ function ProfileController() {
     const timestamp = Date.now();
     const message = `${nftAddress}|${timestamp}`;
     const signResult = await window.dingo.requestSign(
-      Hex.stringify(Sha256(message))
+      await sha256Hex(message)
     );
     if (signResult.error !== undefined) {
       return;

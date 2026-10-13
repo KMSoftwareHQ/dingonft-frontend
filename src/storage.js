@@ -1,9 +1,9 @@
-// REACT_APP_STORAGE_BASE switches to a path-style S3 endpoint (e.g. the
+// VITE_STORAGE_BASE switches to a path-style S3 endpoint (e.g. the
 // dingonft-provider dev MinIO) where buckets are URL paths.
-// REACT_APP_STORAGE_BUCKET_PREFIX matches the backend's bucket names.
-const STORAGE_BASE = process.env.REACT_APP_STORAGE_BASE;
+// VITE_STORAGE_BUCKET_PREFIX matches the backend's bucket names.
+const STORAGE_BASE = import.meta.env.VITE_STORAGE_BASE;
 const BUCKET_PREFIX =
-  process.env.REACT_APP_STORAGE_BUCKET_PREFIX || "dingo-nftc-0-";
+  import.meta.env.VITE_STORAGE_BUCKET_PREFIX || "dingo-nftc-0-";
 const bucket = (name) =>
   STORAGE_BASE
     ? `${STORAGE_BASE}/${BUCKET_PREFIX}${name}`

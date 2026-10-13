@@ -15,14 +15,6 @@ import {
   getProfile
 } from "./storage";
 
-const nameOrAddress = (x) => {
-  if (x.name === null || x.name === undefined || x.name.trim() === "") {
-    return x.address;
-  } else {
-    return x.name;
-  }
-};
-
 function NFTCard(props) {
   const domRef = React.useRef();
   const [isVisible, setVisible] = React.useState(false);
@@ -40,12 +32,9 @@ function NFTCard(props) {
         }
       });
     });
-    observer.observe(domRef.current);
-    return () => {
-      try {
-        observer.unobserve(domRef.current);
-      } catch {}
-    };
+    const element = domRef.current;
+    observer.observe(element);
+    return () => observer.unobserve(element);
   }, []);
 
   React.useEffect(() => {

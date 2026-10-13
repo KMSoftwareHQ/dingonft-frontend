@@ -24,12 +24,9 @@ function ProfileCard(props) {
         }
       });
     });
-    observer.observe(domRef.current);
-    return () => {
-      try {
-        observer.unobserve(domRef.current);
-      } catch {}
-    };
+    const element = domRef.current;
+    observer.observe(element);
+    return () => observer.unobserve(element);
   }, []);
 
   React.useEffect(() => {
@@ -71,6 +68,7 @@ function ProfileCard(props) {
           <img
             className="my-auto ms-4 me-3"
             src={previewLink === null ? getPreviewLink('DP7CwNZ2AwbvYmFU5bQ8m49AUYLeTePsLt') : previewLink}
+            alt=""
           />
           <div className="my-auto d-flex flex-column me-auto">
             <span className="title text-truncate text-start me-auto ms-0">

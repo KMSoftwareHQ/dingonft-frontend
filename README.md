@@ -1,11 +1,34 @@
-# dingonft-frontend
+# Dingocoin NFT frontend
 
-This is the frontend of the NFT platform.
+React frontend for the Dingocoin NFT platform. Production is served at
+[nft.dingocoin.com](https://nft.dingocoin.com/).
 
-## Setup
-1) Install node v16.
-2) Clone this repo.
-3) Run `yarn install` to install dependencesi.
-4) Run `node app` to run the app.
+## Local setup
 
-Note that this app uses placeholders for Open Graph meta deta. To actually load the meta data, please additionally run [dingonft-link](https://github.com/rkbling/dingonft-link) in front of this app.
+Requires Node.js 24 LTS and npm 12.
+
+```bash
+npm ci
+npm run dev
+```
+
+Useful checks:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+The full test environment runs under Docker at
+`http://localhost:3020/testing-nft-platform/`:
+
+```bash
+docker compose up -d --build
+```
+
+Start the sibling `dingonft-provider` stack first so the API and storage
+proxies have live targets. See [.env.example](.env.example) for overrides.
+
+Open Graph placeholders in `index.html` are populated by
+[dingonft-link](https://github.com/rkbling/dingonft-link) in production.

@@ -25,12 +25,9 @@ function CollectionCard(props) {
         }
       });
     });
-    observer.observe(domRef.current);
-    return () => {
-      try {
-        observer.unobserve(domRef.current);
-      } catch {}
-    };
+    const element = domRef.current;
+    observer.observe(element);
+    return () => observer.unobserve(element);
   }, []);
 
   React.useEffect(() => {
@@ -66,7 +63,7 @@ function CollectionCard(props) {
         ))}
       {collection !== null && stats !== null && (
         <div className="collection-card d-flex flex-column">
-          <img className="mx-auto mt-4 mb-3" src={previewLink} />
+          <img className="mx-auto mt-4 mb-3" src={previewLink} alt="" />
           <span className="mx-auto title">
             {collection !== null && collection.name}
           </span>

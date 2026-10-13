@@ -39,10 +39,12 @@ function SearchController() {
 
   React.useEffect(() => {
     (async () => {
-      setSearch(new URLSearchParams(location.search).get("query"));
-      await doChangeSearchSubview("nfts");
+      const query = new URLSearchParams(location.search).get("query");
+      setSearch(query);
+      setSearchSubView("nfts");
+      setSearchNfts((await queryNftBySearch({ search: query })).results);
     })();
-  }, []);
+  }, [location.search]);
 
   const doSearch = async (e) => {
     e.preventDefault();

@@ -1,5 +1,4 @@
 import {
-  div,
   Tab,
   Nav,
   Button,
@@ -56,7 +55,7 @@ function ExploreCollectionsController() {
         }
       }
     })();
-  }, []);
+  }, [location.search, view]);
 
   const doSearch = async (e) => {
     e.preventDefault();

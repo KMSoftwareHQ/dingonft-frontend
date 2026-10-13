@@ -1,14 +1,7 @@
 import "./App.scss";
-import CreateController from "./CreateController";
-import ProfileController from "./ProfileController";
-import ExploreCollectionsController from "./ExploreCollectionsController";
-import ExploreNftsController from "./ExploreNftsController";
-import ExploreProfilesController from "./ExploreProfilesController";
-import SearchController from "./SearchController";
 import {
   Navbar,
   Nav,
-  NavDropdown,
   NavItem,
   NavLink,
   Dropdown,
@@ -25,10 +18,8 @@ import {
   faList,
   faUserCircle,
   faThLarge,
-  faShoppingBag,
 } from "@fortawesome/free-solid-svg-icons";
 import DingocoinLogo from "./assets/img/dingocoin.png";
-import MaintLogo from "./assets/img/Comp-1_1.gif";
 
 import React from "react";
 import {
@@ -39,15 +30,22 @@ import {
 } from "react-router-dom";
 import Main from "./Main";
 import Maintenance from "./Maintenance"
-import { link } from "./utils";
+import { basePath, link } from "./utils";
+
+const CreateController = React.lazy(() => import("./CreateController"));
+const ProfileController = React.lazy(() => import("./ProfileController"));
+const ExploreCollectionsController = React.lazy(() =>
+  import("./ExploreCollectionsController")
+);
+const ExploreNftsController = React.lazy(() =>
+  import("./ExploreNftsController")
+);
+const ExploreProfilesController = React.lazy(() =>
+  import("./ExploreProfilesController")
+);
+const SearchController = React.lazy(() => import("./SearchController"));
+
 export default function App() {
-
-  const [location, setLocation] = React.useState(null);
-  React.useEffect(() => {
-    setLocation(window.location.pathname);
-  }, []);
-  React.useEffect(() => {}, [location]);
-
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchErrorShow, setSearchErrorShow] = React.useState(null);
 
@@ -133,12 +131,12 @@ export default function App() {
                 <nobr>Create</nobr>
               </span>
             </Nav.Link>
-            <Nav.Link href="https://forms.gle/jxhWR7EMWV7fivn46" target="_blank" rel="noreffere">
+            <Nav.Link href="https://forms.gle/jxhWR7EMWV7fivn46" target="_blank" rel="noreferrer">
               <span className="align-middle">
                 <nobr>Report</nobr>
               </span>
             </Nav.Link>
-            <Nav.Link href="https://dingocoin.org" target="_blank">
+            <Nav.Link href="https://dingocoin.com" target="_blank" rel="noreferrer">
               <span className="align-middle">
                 <nobr>Visit Dingocoin</nobr>
               </span>
@@ -147,8 +145,11 @@ export default function App() {
         </Navbar.Collapse>
       </Navbar>
       <section className="section-content">
-        <Router basename={process.env.PUBLIC_URL}>
-          <Routes>
+        <Router basename={basePath || "/"}>
+          <React.Suspense
+            fallback={<div className="p-5 text-center">Loading…</div>}
+          >
+            <Routes>
             <Route index element={<Main />} />
             <Route path="/profile">
               <Route path=":profileAddress" element={<ProfileController />}>
@@ -179,7 +180,8 @@ export default function App() {
             <Route path="/search" element={<SearchController />} />
             <Route path="/create" element={<CreateController />} />
             <Route element={<Navigate to="/" />} />
-          </Routes>
+            </Routes>
+          </React.Suspense>
         </Router>
       </section>
       <section>

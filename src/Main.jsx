@@ -11,7 +11,6 @@ import {
   faHandHoldingUsd,
   faWallet,
   faChevronDown,
-  faHandSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import CustomDivider from "./CustomDivider";
 import FadeInSection from "./FadeInSection";
@@ -134,8 +133,9 @@ function Main() {
       <div className="d-flex flex-row projectFactsWrap">
         <div className="item mt-2 mx-auto">
           <p className="number">
-            {platformStats === null && "-"}
-            {platformStats !== null && (
+            {/* totalVolume is null until the platform has had a trade. */}
+            {(platformStats === null || platformStats.totalVolume === null) && "-"}
+            {platformStats !== null && platformStats.totalVolume !== null && (
               `${toLocaleString(platformStats.totalVolume)} DINGO`
             )}
           </p>
@@ -160,7 +160,7 @@ function Main() {
             <br />
             this is a non-custodial service!
           </p>
-          <a href="https://dingocoin.org" target="_blank">
+          <a href="https://dingocoin.com" target="_blank" rel="noreferrer">
             <Button className="popup-button px-4 py-2 mt-2" variant="primary">
               Visit Dingocoin
             </Button>

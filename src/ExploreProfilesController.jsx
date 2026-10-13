@@ -1,5 +1,4 @@
 import {
-  Row,
   Tab,
   Nav,
   Button,
@@ -56,7 +55,7 @@ function ExploreProfilesController() {
         }
       }
     })();
-  }, []);
+  }, [location.search, view]);
 
   const doSearch = async (e) => {
     e.preventDefault();

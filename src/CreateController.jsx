@@ -9,13 +9,9 @@ import {
 } from "react-bootstrap";
 import React from "react";
 import CustomDivider from "./CustomDivider";
-import isPng from "is-png";
-import sizeOf from "buffer-image-size";
-import Sha256 from "crypto-js/sha256";
-import Hex from "crypto-js/enc-hex";
-import Base64 from "crypto-js/enc-base64";
 import GetWalletModal from "./GetWalletModal";
 import { sendListTransaction, getListTransaction } from "./api";
+import { sha256Hex } from "./crypto";
 import { toSatoshi, link } from "./utils";
 
 const isWebp = (buffer) => {
@@ -33,6 +29,18 @@ const isWebp = (buffer) => {
     buffer[10] === 0x42 &&
     buffer[11] === 0x50
   );
+};
+
+const isPng = (buffer) => {
+  const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  return signature.every((byte, index) => buffer[index] === byte);
+};
+
+const getImageDimensions = async (file) => {
+  const image = await createImageBitmap(file);
+  const dimensions = { width: image.width, height: image.height };
+  image.close();
+  return dimensions;
 };
 
 const MAX_CONTENT_SIZE = 10 * 1e6; // 10 MB.
@@ -78,25 +86,41 @@ function CreateController() {
   }, [content]);
 
   React.useEffect(() => {
-    (async () => {
-      if (preview !== null) {
-        const f = Buffer.from(await toBase64(preview), "base64");
-        if (!isPng(f) && !isWebp(f)) {
-          setPreviewError("Cover thumbnail must be a PNG or WEBP");
-        } else if (preview.size > MAX_PREVIEW_SIZE) {
-          setPreviewError("Cover file size limit exceeded (max 1 MB)");
-        } else if (
-          sizeOf(f).width === 0 ||
-          sizeOf(f).width !== sizeOf(f).height
-        ) {
-          setPreviewError("Cover thumbnail must have equal width and height");
-        } else {
-          setPreviewError("");
-        }
-      } else {
-        setPreviewError("Cover thumbnail required");
+    let cancelled = false;
+
+    const validatePreview = async () => {
+      if (preview === null) {
+        return "Cover thumbnail required";
       }
-    })();
+      if (preview.size > MAX_PREVIEW_SIZE) {
+        return "Cover file size limit exceeded (max 1 MB)";
+      }
+
+      const header = new Uint8Array(await preview.slice(0, 12).arrayBuffer());
+      if (!isPng(header) && !isWebp(header)) {
+        return "Cover thumbnail must be a PNG or WEBP";
+      }
+
+      try {
+        const { width, height } = await getImageDimensions(preview);
+        if (width === 0 || width !== height) {
+          return "Cover thumbnail must have equal width and height";
+        }
+      } catch {
+        return "Cover thumbnail could not be read";
+      }
+      return "";
+    };
+
+    validatePreview().then((message) => {
+      if (!cancelled) {
+        setPreviewError(message);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [preview]);
 
   const doSubmit = async (e) => {
@@ -110,9 +134,7 @@ function CreateController() {
     }
 
     const getListTransactionResponse = await getListTransaction({
-      // CryptoJS expects inputs to be a utf8 string. So we encode our data
-      // into that.
-      contentHash: Hex.stringify(Sha256(Base64.parse(await toBase64(content)))),
+      contentHash: await sha256Hex(content),
       price: toSatoshi(listingPrice),
       royalty: 25 + Math.floor((royalty * 75) / 100),
     });
