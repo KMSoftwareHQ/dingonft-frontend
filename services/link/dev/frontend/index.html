@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>%%_OG_TITLE_%%</title>
+  <meta property="og:title" content="%%_OG_TITLE_%%">
+  <meta property="og:url" content="%%_OG_URL_%%">
+  <meta property="og:description" content="%%_OG_DESCRIPTION_%%">
+  <meta property="og:image" content="%%_OG_IMAGE_%%">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 40rem; }
+    code { background: #eee; padding: .1em .3em; }
+    dt { font-weight: bold; margin-top: .75rem; }
+  </style>
+</head>
+<body>
+  <h1>dingonft-link dev fixture</h1>
+  <p>This is a stand-in for the real frontend build. It exists so the OG-injection
+  server can run locally without <code>../dingonft-frontend-private</code>.
+  The values below were substituted by the server for this request:</p>
+  <dl>
+    <dt>og:title</dt><dd>%%_OG_TITLE_%%</dd>
+    <dt>og:url</dt><dd>%%_OG_URL_%%</dd>
+    <dt>og:description</dt><dd>%%_OG_DESCRIPTION_%%</dd>
+    <dt>og:image</dt><dd><code>%%_OG_IMAGE_%%</code><br>
+      <img src="%%_OG_IMAGE_%%" alt="(no og:image)" style="max-width:300px;display:block;margin-top:.5rem;border:1px solid #ccc"></dd>
+  </dl>
+  <h2>Seeded fixture routes</h2>
+  <p>These ids exist in the local object store after <code>yarn dev:storage</code> (see <code>dev/generate-fixtures.py</code>):</p>
+  <ul>
+    <li><a href="/nft/DdevNftAlpha1111111111111111111111">/nft/…Alpha</a> — name + description</li>
+    <li><a href="/nft/DdevNftBeta22222222222222222222222">/nft/…Beta</a> — no description</li>
+    <li><a href="/nft/DdevNftGamma333333333333333333333">/nft/…Gamma</a> — no name</li>
+    <li><a href="/nft/DdevNftMissing">/nft/DdevNftMissing</a> — 404</li>
+    <li><a href="/collection/dev-dingos">/collection/dev-dingos</a></li>
+    <li><a href="/collection/dev-nameless">/collection/dev-nameless</a> — no name</li>
+    <li><a href="/profile/DdevOwnerWithAvatar4444444444444444">/profile/…WithAvatar</a></li>
+    <li><a href="/profile/DdevOwnerNoAvatar66666666666666666">/profile/…NoAvatar</a> — empty og:image</li>
+    <li><a href="/profile/DdevUnknown">/profile/DdevUnknown</a> — not in bucket, still 200</li>
+  </ul>
+  <p><a href="/static-check.txt">static asset check</a></p>
+</body>
+</html>
