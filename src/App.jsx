@@ -1,14 +1,7 @@
 import "./App.scss";
-import CreateController from "./CreateController";
-import ProfileController from "./ProfileController";
-import ExploreCollectionsController from "./ExploreCollectionsController";
-import ExploreNftsController from "./ExploreNftsController";
-import ExploreProfilesController from "./ExploreProfilesController";
-import SearchController from "./SearchController";
 import {
   Navbar,
   Nav,
-  NavDropdown,
   NavItem,
   NavLink,
   Dropdown,
@@ -25,10 +18,8 @@ import {
   faList,
   faUserCircle,
   faThLarge,
-  faShoppingBag,
 } from "@fortawesome/free-solid-svg-icons";
 import DingocoinLogo from "./assets/img/dingocoin.png";
-import MaintLogo from "./assets/img/Comp-1_1.gif";
 
 import React from "react";
 import {
@@ -39,14 +30,22 @@ import {
 } from "react-router-dom";
 import Main from "./Main";
 import Maintenance from "./Maintenance"
+import { basePath, link } from "./utils";
+
+const CreateController = React.lazy(() => import("./CreateController"));
+const ProfileController = React.lazy(() => import("./ProfileController"));
+const ExploreCollectionsController = React.lazy(() =>
+  import("./ExploreCollectionsController")
+);
+const ExploreNftsController = React.lazy(() =>
+  import("./ExploreNftsController")
+);
+const ExploreProfilesController = React.lazy(() =>
+  import("./ExploreProfilesController")
+);
+const SearchController = React.lazy(() => import("./SearchController"));
+
 export default function App() {
-
-  const [location, setLocation] = React.useState(null);
-  React.useEffect(() => {
-    setLocation(window.location.pathname);
-  }, []);
-  React.useEffect(() => {}, [location]);
-
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchErrorShow, setSearchErrorShow] = React.useState(null);
 
@@ -56,7 +55,7 @@ export default function App() {
     e.nativeEvent.stopImmediatePropagation();
 
     if (searchQuery.trim() !== "") {
-      window.location.assign(`/search?query=${searchQuery.trim()}`);
+      window.location.assign(link(`/search?query=${searchQuery.trim()}`));
     }
   };
 {/*Toggle Maint Mode  const maintenance=   | true = Maint Mode on  |  false = Maint Mode Off*/}
@@ -69,7 +68,7 @@ export default function App() {
 
     <div className="App">
       <Navbar className="navbar px-4 py-2" bg="dark" expand="lg" sticky="top">
-        <Navbar.Brand href="/" className="navbar-brand align-items-center">
+        <Navbar.Brand href={link("/")} className="navbar-brand align-items-center">
           <img alt="" src={DingocoinLogo} />
           <span className="d-none d-lg-block d-xl-block">DINGOCOIN</span>
           <span className="navbar-brand-subtitle"> NFT Platform</span>
@@ -100,7 +99,7 @@ export default function App() {
                 )}
               </InputGroup>
             </Form>
-            <Nav.Link href="/">
+            <Nav.Link href={link("/")}>
               <span className="align-middle">
                 <nobr>Home</nobr>
               </span>
@@ -110,15 +109,15 @@ export default function App() {
                 <span className="align-middle">Explore</span>
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item href="/collections">
+                <Dropdown.Item href={link("/collections")}>
                   <FontAwesomeIcon className="me-2 accent" icon={faThLarge} />
                   Collections
                 </Dropdown.Item>
-                <Dropdown.Item href="/nfts">
+                <Dropdown.Item href={link("/nfts")}>
                   <FontAwesomeIcon className="me-2 accent" icon={faList} />
                   NFTs
                 </Dropdown.Item>
-                <Dropdown.Item href="/profiles">
+                <Dropdown.Item href={link("/profiles")}>
                   <FontAwesomeIcon
                     className="me-2 accent"
                     icon={faUserCircle}
@@ -127,17 +126,17 @@ export default function App() {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-            <Nav.Link href="/create">
+            <Nav.Link href={link("/create")}>
               <span className="align-middle">
                 <nobr>Create</nobr>
               </span>
             </Nav.Link>
-            <Nav.Link href="https://forms.gle/jxhWR7EMWV7fivn46" target="_blank" rel="noreffere">
+            <Nav.Link href="https://forms.gle/jxhWR7EMWV7fivn46" target="_blank" rel="noreferrer">
               <span className="align-middle">
                 <nobr>Report</nobr>
               </span>
             </Nav.Link>
-            <Nav.Link href="https://dingocoin.org" target="_blank">
+            <Nav.Link href="https://dingocoin.com" target="_blank" rel="noreferrer">
               <span className="align-middle">
                 <nobr>Visit Dingocoin</nobr>
               </span>
@@ -146,8 +145,11 @@ export default function App() {
         </Navbar.Collapse>
       </Navbar>
       <section className="section-content">
-        <Router>
-          <Routes>
+        <Router basename={basePath || "/"}>
+          <React.Suspense
+            fallback={<div className="p-5 text-center">Loading…</div>}
+          >
+            <Routes>
             <Route index element={<Main />} />
             <Route path="/profile">
               <Route path=":profileAddress" element={<ProfileController />}>
@@ -178,7 +180,8 @@ export default function App() {
             <Route path="/search" element={<SearchController />} />
             <Route path="/create" element={<CreateController />} />
             <Route element={<Navigate to="/" />} />
-          </Routes>
+            </Routes>
+          </React.Suspense>
         </Router>
       </section>
       <section>

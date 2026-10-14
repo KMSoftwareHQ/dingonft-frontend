@@ -1,19 +1,11 @@
 import "./App.scss";
-import React from "react";
 import MaintLogo from "./assets/img/Comp-1_1.gif";
 
 // Controls.
-import {
-  Modal,
-  Navbar,
-  Container,
-  Row,
-} from "react-bootstrap";
+import { Navbar, Container, Row } from "react-bootstrap";
 
 // Assets.
 import DingocoinLogo from "./assets/img/dingocoin.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 // Output.
 export default function Maintenance() {

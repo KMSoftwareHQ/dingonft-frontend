@@ -1,13 +1,17 @@
-/* global BigInt */
-
-import Web3Utils from "web3-utils";
 import axios from "axios";
 
 const toSatoshi = (x) => {
   if (x === null || x === undefined || typeof x !== "string" || x === "") {
     throw new Error("Expected string input");
   }
-  return (BigInt(Web3Utils.toWei(x, "gwei")) / 10n).toString();
+  const match = x.match(/^([+-]?)(\d+)(?:\.(\d{1,8}))?$/);
+  if (!match) {
+    throw new Error("Expected a decimal string with at most 8 decimal places");
+  }
+  const [, sign, whole, fraction = ""] = match;
+  const satoshis =
+    BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, "0"));
+  return (sign === "-" ? -satoshis : satoshis).toString();
 };
 
 const toLocaleString = (x) => {
@@ -61,4 +65,17 @@ const get = (link) => {
   });
 };
 
-export { toSatoshi, toLocaleString, satoshiToLocaleString, post, get };
+// BASE_URL is "/" in production and includes the configured test sub-path in
+// development. Strip the trailing slash before joining app-absolute paths.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const link = (path) => `${basePath}${path}`;
+
+export {
+  basePath,
+  link,
+  toSatoshi,
+  toLocaleString,
+  satoshiToLocaleString,
+  post,
+  get,
+};

@@ -11,12 +11,11 @@ import {
   faHandHoldingUsd,
   faWallet,
   faChevronDown,
-  faHandSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import CustomDivider from "./CustomDivider";
 import FadeInSection from "./FadeInSection";
 import { getPlatformStats } from "./api";
-import { toLocaleString } from "./utils";
+import { toLocaleString, link } from "./utils";
 
 function Main() {
   const [platformStats, setPlatformStats] = React.useState(null);
@@ -66,7 +65,7 @@ function Main() {
           items={hotCollections}
           itemTemplate={(x) => (
             <li key={x}>
-              <a href={`/collection/${x}`}>
+              <a href={link(`/collection/${x}`)}>
                 <CollectionCard handle={x} />
               </a>
             </li>
@@ -80,7 +79,7 @@ function Main() {
           items={newNfts}
           itemTemplate={(x) => (
             <li key={x}>
-              <a href={`/nft/${x}`}>
+              <a href={link(`/nft/${x}`)}>
                 <NFTCard address={x} />
               </a>
             </li>
@@ -94,7 +93,7 @@ function Main() {
           items={recentNfts}
           itemTemplate={(x) => (
             <li key={x}>
-              <a href={`/nft/${x}`}>
+              <a href={link(`/nft/${x}`)}>
                 <NFTCard address={x} />
               </a>
             </li>
@@ -134,8 +133,9 @@ function Main() {
       <div className="d-flex flex-row projectFactsWrap">
         <div className="item mt-2 mx-auto">
           <p className="number">
-            {platformStats === null && "-"}
-            {platformStats !== null && (
+            {/* totalVolume is null until the platform has had a trade. */}
+            {(platformStats === null || platformStats.totalVolume === null) && "-"}
+            {platformStats !== null && platformStats.totalVolume !== null && (
               `${toLocaleString(platformStats.totalVolume)} DINGO`
             )}
           </p>
@@ -160,7 +160,7 @@ function Main() {
             <br />
             this is a non-custodial service!
           </p>
-          <a href="https://dingocoin.org" target="_blank">
+          <a href="https://dingocoin.com" target="_blank" rel="noreferrer">
             <Button className="popup-button px-4 py-2 mt-2" variant="primary">
               Visit Dingocoin
             </Button>
@@ -183,7 +183,7 @@ function Main() {
           <p className="text-center">
             Upload your awesome work and start selling it as an NFT today.
           </p>
-          <a href="/create">
+          <a href={link("/create")}>
             <Button className="popup-button px-4 py-2 mt-2" variant="primary">
               Create your NFT
             </Button>
@@ -226,7 +226,7 @@ function Main() {
             Check out the phenomenal creations by others. Buy and sell work
             worthy of praise and appreciation.
           </p>
-          <a href="/collections">
+          <a href={link("/collections")}>
             <Button className="popup-button px-4 py-2 mt-2" variant="primary">
               Explore collections
             </Button>

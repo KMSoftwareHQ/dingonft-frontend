@@ -14,4 +14,4 @@ Disallow: /profile
 Disallow: /profile/*
 Disallow: /search
 Disallow: /search/*
-Sitemap: https://nft.dingocoin.org/sitemap.xml
+Sitemap: https://nft.dingocoin.com/sitemap.xml

@@ -11,12 +11,9 @@ function FadeInSection(props) {
         }
       });
     });
-    observer.observe(domRef.current);
-    return () => {
-      try {
-        observer.unobserve(domRef.current);
-      } catch {}
-    };
+    const element = domRef.current;
+    observer.observe(element);
+    return () => observer.unobserve(element);
   }, []);
   return (
     <div
