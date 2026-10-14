@@ -1,6 +1,6 @@
 const crypto = require("crypto");
-const secp256k1 = require("secp256k1");
-const bs58 = require("bs58");
+const { secp256k1 } = require("@noble/curves/secp256k1");
+const bs58 = require("bs58").default;
 
 const isBs58 = (x) => {
   return x.match(/^[1-9A-HJ-NP-Za-km-z]+$/);
@@ -31,7 +31,7 @@ const isWif = (wif) => {
   if (!isBs58(wif)) {
     return false;
   }
-  const raw = bs58.decode(wif);
+  const raw = Buffer.from(bs58.decode(wif));
   if (raw.length !== 37 && raw.length !== 38) {
     return false;
   }
@@ -58,7 +58,7 @@ const fromWif = (wif) => {
   if (!isWif(wif)) {
     throw new Error("Incorrect or unsupported format");
   }
-  return bs58.decode(wif).slice(1, 1 + 32);
+  return Buffer.from(bs58.decode(wif)).slice(1, 1 + 32);
 };
 
 // Validate Dingocoin address.
@@ -66,7 +66,7 @@ const isAddress = (address) => {
   if (!isBs58(address)) {
     return false;
   }
-  const raw = bs58.decode(address);
+  const raw = Buffer.from(bs58.decode(address));
 
   if (raw.length !== 25) {
     return false;
@@ -80,11 +80,7 @@ const isAddress = (address) => {
 
 // SECP256k1 private key to public key.
 const privateKeyToPublicKey = (privKey) => {
-  const pubKey = secp256k1.publicKeyCreate(
-    new Uint8Array(privKey),
-    (compressed = true)
-  );
-  return Buffer.from(pubKey);
+  return Buffer.from(secp256k1.getPublicKey(privKey, true));
 };
 
 // Create Dingocoin address from public key.
@@ -101,18 +97,28 @@ const privateKeyToAddress = (privKey) => {
 };
 
 const sign = (data, privateKey) => {
-  return Buffer.from(secp256k1.ecdsaSign(data, privateKey).signature);
+  return Buffer.from(
+    secp256k1.sign(data, privateKey, { prehash: false, lowS: true })
+      .toCompactRawBytes()
+  );
 };
 
 const verify = (data, signature, publicKey) => {
-  return secp256k1.ecdsaVerify(signature, data, publicKey);
+  return secp256k1.verify(signature, data, publicKey, {
+    prehash: false,
+    lowS: true,
+  });
 };
 
 const recover = (data, signature) => {
   const results = [];
   for (let i = 0; i < 4; i++) {
     try {
-      results.push(Buffer.from(secp256k1.ecdsaRecover(signature, i, data)));
+      const publicKey = secp256k1.Signature.fromCompact(signature)
+        .addRecoveryBit(i)
+        .recoverPublicKey(data)
+        .toRawBytes(true);
+      results.push(Buffer.from(publicKey));
     } catch {}
   }
   return results;

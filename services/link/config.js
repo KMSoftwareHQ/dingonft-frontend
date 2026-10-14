@@ -10,27 +10,33 @@ if (fs.existsSync(envFile)) {
 
 const NODE_ENV = process.env.NODE_ENV || "production";
 const isDev = NODE_ENV === "development";
+const rawBasePath = process.env.BASE_PATH || "";
+const BASE_PATH = rawBasePath === "/" ? "" : `/${rawBasePath.replace(/^\/+|\/+$/g, "")}`;
 
 const config = {
   NODE_ENV,
   isDev,
+  BASE_PATH,
   // Port to listen on. Production historically bound 80; dev defaults to an
   // unprivileged port so no sudo is needed.
   PORT: Number(process.env.PORT) || (isDev ? 3000 : 80),
-  // Directory containing the built frontend (index.html + assets). Dev
-  // defaults to the bundled fixture so the server runs without the private
-  // frontend repo checked out alongside.
+  // Directory containing a built frontend (index.html + assets) when the
+  // independently deployed FRONTEND_URL mode is not used.
   BUILD_DIR: path.resolve(
     __dirname,
-    process.env.BUILD_DIR || (isDev ? "./dev/frontend" : "../dingonft-frontend-private")
+    process.env.BUILD_DIR || (isDev ? "./dev/frontend" : "../../apps/frontend/dist")
   ),
   // Public origin used in og:url tags.
-  ROOT_PATH: process.env.ROOT_PATH || "https://nft.dingocoin.org",
-  LOGO: process.env.LOGO || "https://nft.dingocoin.org/dingocoin.png",
+  ROOT_PATH: process.env.ROOT_PATH || "https://nft.dingocoin.com",
+  LOGO: process.env.LOGO || "https://nft.dingocoin.com/dingocoin.png",
+  // In the monorepo the frontend is independently deployed. The edge fetches
+  // its index template and proxies assets/API requests to this origin.
+  FRONTEND_URL: process.env.FRONTEND_URL || "",
   // Object storage base; bucket names are appended in storage.js. Dev defaults
-  // to the local MinIO from docker-compose.yml (`yarn dev:storage`).
+  // to local MinIO when running the root Compose stack.
   STORAGE_BASE:
     process.env.STORAGE_BASE || (isDev ? "http://localhost:9000" : "https://ewr1.vultrobjects.com"),
+  STORAGE_BUCKET_PREFIX: process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0",
   API_URL: process.env.API_URL || "https://nftp0.dingocoin.io",
   FETCH_TIMEOUT_MS: Number(process.env.FETCH_TIMEOUT_MS) || 30000,
 };

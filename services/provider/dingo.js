@@ -1,9 +1,6 @@
 "use strict";
 
 const fs = require('fs');
-const request = require('request');
-const crypto = require('crypto');
-const Web3Utils = require("web3-utils");
 const os = require("os");
 
 const DINGO_COOKIE_PATH = (process.env.DINGO_COOKIE_PATH || '/home/dingo/.dingocoin/.cookie').replace('~', os.homedir);
@@ -29,14 +26,29 @@ function toSatoshi(x) {
   if (x === null || x === undefined || typeof(x) !== 'string' || x === '') {
     throw new Error('Expected string input');
   }
-  return (BigInt(Web3Utils.toWei(x, 'gwei')) / 10n).toString();
+  const match = x.match(/^([+-]?)(\d+)(?:\.(\d{1,8}))?$/);
+  if (!match) {
+    throw new Error('Expected a decimal string with at most 8 decimal places');
+  }
+  const [, sign, whole, fraction = ''] = match;
+  const satoshis =
+    BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, '0'));
+  return (sign === '-' ? -satoshis : satoshis).toString();
 }
 
 function fromSatoshi(x) {
   if (x === null || x === undefined || typeof(x) !== 'string' || x === '') {
     throw new Error('Expected string input');
   }
-  return (Web3Utils.fromWei((BigInt(x) * 10n).toString(), 'gwei')).toString();
+  const value = BigInt(x);
+  const negative = value < 0n;
+  const absolute = negative ? -value : value;
+  const whole = absolute / 100_000_000n;
+  const fraction = (absolute % 100_000_000n)
+    .toString()
+    .padStart(8, '0')
+    .replace(/0+$/, '');
+  return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`;
 }
 
 function getCookie() {
@@ -46,30 +58,29 @@ function getCookie() {
 
 async function callRpc(method, params) {
   const cookie = getCookie();
-  const options = {
-      url: "http://" + DINGO_HOST + ":" + DINGO_PORT.toString(),
-      method: "post",
-      headers: { "content-type": "text/plain" },
-      auth: { user: cookie.user, pass: cookie.password },
-      body: JSON.stringify( {"jsonrpc": "1.0", "method": method, "params": params})
-  };
-
-  return new Promise((resolve, reject) => {
-    request(options, (err, resp, body) => {
-      if (err) {
-        return reject(err);
-      } else {
-        const r = JSON.parse(body
-          .replace(/"(amount|value)":\s*(\-?)(\d+)\.((\d*?[1-9])0*),/g, '"$1":"$2$3\.$5",')
-          .replace(/"(amount|value)":\s*(\-?)(\d+)\.0+,/g, '"$1":"$2$3",'));
-        if (r.error) {
-          reject(r.error);
-        } else {
-          resolve(r.result);
-        }
-      }
-    });
-  });
+  const authorization = Buffer.from(`${cookie.user}:${cookie.password}`).toString('base64');
+  const response = await fetch(
+    `http://${DINGO_HOST}:${DINGO_PORT}`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${authorization}`,
+        'content-type': 'text/plain',
+      },
+      body: JSON.stringify({ jsonrpc: '1.0', method, params }),
+    }
+  );
+  const body = await response.text();
+  const result = JSON.parse(body
+    .replace(/"(amount|value)":\s*(\-?)(\d+)\.((\d*?[1-9])0*),/g, '"$1":"$2$3\.$5",')
+    .replace(/"(amount|value)":\s*(\-?)(\d+)\.0+,/g, '"$1":"$2$3",'));
+  if (result.error) {
+    throw result.error;
+  }
+  if (!response.ok) {
+    throw new Error(`Dingocoin RPC returned HTTP ${response.status}`);
+  }
+  return result.result;
 }
 
 function getBlockHash(height) {

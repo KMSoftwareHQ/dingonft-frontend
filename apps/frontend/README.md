@@ -20,15 +20,16 @@ npm test
 npm run build
 ```
 
-The full test environment runs under Docker at
+The full monorepo test environment runs under Docker at
 `http://localhost:3020/testing-nft-platform/`:
 
 ```bash
 docker compose up -d --build
 ```
 
-Start the sibling `dingonft-provider` stack first so the API and storage
-proxies have live targets. See [.env.example](.env.example) for overrides.
+Run that command from the repository root; it starts the provider, storage,
+database, chain node, link edge, and frontend as separate containers. For the
+fast deterministic browser topology, run `npm run test:e2e` from the root.
 
 Open Graph placeholders in `index.html` are populated by
-[dingonft-link](https://github.com/rkbling/dingonft-link) in production.
+`services/link` in production.

@@ -17,7 +17,7 @@
 <body>
   <h1>dingonft-link dev fixture</h1>
   <p>This is a stand-in for the real frontend build. It exists so the OG-injection
-  server can run locally without <code>../dingonft-frontend-private</code>.
+  server can run locally without starting <code>apps/frontend</code>.
   The values below were substituted by the server for this request:</p>
   <dl>
     <dt>og:title</dt><dd>%%_OG_TITLE_%%</dd>
@@ -27,7 +27,7 @@
       <img src="%%_OG_IMAGE_%%" alt="(no og:image)" style="max-width:300px;display:block;margin-top:.5rem;border:1px solid #ccc"></dd>
   </dl>
   <h2>Seeded fixture routes</h2>
-  <p>These ids exist in the local object store after <code>yarn dev:storage</code> (see <code>dev/generate-fixtures.py</code>):</p>
+  <p>These ids exist in the deterministic E2E object store (see <code>dev/generate-fixtures.py</code>):</p>
   <ul>
     <li><a href="/nft/DdevNftAlpha1111111111111111111111">/nft/…Alpha</a> — name + description</li>
     <li><a href="/nft/DdevNftBeta22222222222222222222222">/nft/…Beta</a> — no description</li>

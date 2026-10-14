@@ -1,0 +1,17 @@
+{
+  "name": "dingonft",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@12.2.0",
+  "engines": {
+    "node": "^24.15.0"
+  },
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:down": "docker compose down",
+    "test": "npm --prefix apps/frontend test && npm --prefix services/provider test",
+    "lint": "npm --prefix apps/frontend run lint",
+    "build": "npm --prefix apps/frontend run build",
+    "test:e2e": "sh scripts/e2e.sh"
+  }
+}

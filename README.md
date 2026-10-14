@@ -1,0 +1,71 @@
+# Dingocoin NFT platform
+
+This monorepo contains the three deployable parts of the Dingocoin NFT
+platform:
+
+- `apps/frontend` — React/Vite browser application
+- `services/link` — public edge server and Open Graph renderer
+- `services/provider` — API and blockchain indexer
+
+Production is <https://nft.dingocoin.com>. The components remain separate
+containers so they can be built, deployed, restarted, and scaled independently.
+
+## Full development stack
+
+The full stack runs the real provider with Postgres, MinIO, and `dingocoind`:
+
+```sh
+docker compose up -d --build
+```
+
+Open <http://localhost:3020/testing-nft-platform/>. The first node sync can take
+a long time; its chain data is kept in a named volume. API, object-storage, and
+database ports bind to loopback only.
+
+Copy `.env.example` to `.env` to override ports or the test sub-path. The
+checked-in defaults are development-only; production remains
+`https://nft.dingocoin.com` and is not started by this Compose file.
+
+## Deterministic E2E stack
+
+The browser suite uses the real frontend and link containers with seeded object
+storage and a deterministic API fixture. It does not wait for blockchain sync:
+
+```sh
+npm run test:e2e
+```
+
+The command builds the E2E topology, runs Playwright in Chromium, and tears the
+stack down. Set `E2E_KEEP_STACK=1` to leave it running for inspection at
+<http://localhost:3020/testing-nft-platform/>.
+
+## Frontend checks
+
+Node 24 LTS and npm 12 are expected when running checks without Docker:
+
+```sh
+npm --prefix apps/frontend ci
+npm run lint
+npm test
+npm run build
+```
+
+The provider and edge use the same Node/npm baseline:
+
+```sh
+npm --prefix services/provider ci
+npm --prefix services/provider test
+npm --prefix services/link ci
+```
+
+## Repository migration
+
+The imported component histories are preserved under their new paths. After
+this migration PR is merged, rename the GitHub repository from
+`dingonft-frontend` to `dingonft`; GitHub will redirect existing clone and PR
+URLs. Archive the old `dingonft-provider` and `dingonft-link` repositories only
+after production has been cut over and rollback is no longer needed.
+
+Component-specific architecture notes live beside each component. Never commit
+production secrets; all checked-in credentials and chain keys are development
+fixtures only.

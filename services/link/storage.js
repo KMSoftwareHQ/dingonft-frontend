@@ -1,9 +1,9 @@
-const { STORAGE_BASE } = require("./config");
-const META_BUCKET = `${STORAGE_BASE}/dingo-nftc-0-meta`;
-const PREVIEW_BUCKET = `${STORAGE_BASE}/dingo-nftc-0-preview`;
-const STATE_BUCKET = `${STORAGE_BASE}/dingo-nftc-0-state`;
-const PROFILE_BUCKET = `${STORAGE_BASE}/dingo-nftc-0-profile`;
-const COLLECTION_BUCKET = `${STORAGE_BASE}/dingo-nftc-0-collection`;
+const { STORAGE_BASE, STORAGE_BUCKET_PREFIX } = require("./config");
+const META_BUCKET = `${STORAGE_BASE}/${STORAGE_BUCKET_PREFIX}-meta`;
+const PREVIEW_BUCKET = `${STORAGE_BASE}/${STORAGE_BUCKET_PREFIX}-preview`;
+const STATE_BUCKET = `${STORAGE_BASE}/${STORAGE_BUCKET_PREFIX}-state`;
+const PROFILE_BUCKET = `${STORAGE_BASE}/${STORAGE_BUCKET_PREFIX}-profile`;
+const COLLECTION_BUCKET = `${STORAGE_BASE}/${STORAGE_BUCKET_PREFIX}-collection`;
 
 const { get } = require("./utils");
 

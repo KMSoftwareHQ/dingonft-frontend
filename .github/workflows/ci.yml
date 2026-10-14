@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            apps/frontend/package-lock.json
+            services/link/package-lock.json
+            services/provider/package-lock.json
+      - run: npm install --global npm@12.2.0
+      - run: npm ci
+        working-directory: apps/frontend
+      - run: npm run lint
+        working-directory: apps/frontend
+      - run: npm test
+        working-directory: apps/frontend
+      - run: npm run build
+        working-directory: apps/frontend
+      - run: npm ci
+        working-directory: services/link
+      - run: npm ci
+        working-directory: services/provider
+      - run: npm test
+        working-directory: services/provider
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f compose.e2e.yaml config --quiet
+      - run: npm run test:e2e

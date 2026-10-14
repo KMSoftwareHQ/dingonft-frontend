@@ -1,27 +1,30 @@
 # dingonft-link
 
-This runs in front of the [static frontend](https://github.com/rkbling/dingonft-frontend) but preloads Open Graph metadata onto pages before sending them to the client.
+This runs in front of `apps/frontend`, injects route-specific Open Graph
+metadata, and proxies browser traffic to the independently running frontend
+container.
 
 ## Setup
-1) Install Node 16 or newer.
-2) Clone this repo.
-3) Run `yarn install` to install dependencies.
+1) Install Node.js 24 LTS and npm 12.
+2) Run `npm ci` from this directory.
 
 ## Development
-Requires Docker (for local object storage). Python 3 + Pillow is only needed to regenerate fixtures.
+The supported development topologies are defined at the monorepo root:
 ```sh
-yarn dev:storage       # start MinIO in Docker, create the 5 buckets, upload dev/seed/
-yarn dev               # http://localhost:3000, restarts on file changes
+docker compose up -d --build  # real provider and chain node
+npm run test:e2e              # deterministic provider fixture + Playwright
 ```
-Development is fully self-contained:
-- `dev/frontend/` is a stand-in frontend page that renders the substituted OG values (and the og:image itself) and links to every seeded route.
-- `dev/seed/` holds test NFTs, collections, profiles and preview images, laid out exactly like the production buckets. `dev/generate-fixtures.py` defines and regenerates them (`yarn dev:fixtures`); re-upload with `yarn dev:seed`.
-- The MinIO console is at http://localhost:9001 (minioadmin / minioadmin). `yarn dev:storage:down` stops it; `yarn dev:storage:reset` also wipes the data volume.
 
-To test against real production metadata instead, set `STORAGE_BASE=https://ewr1.vultrobjects.com` in `.env`. To test against a real frontend build, set `BUILD_DIR`. See `.env.example`.
+`dev/seed/` holds deterministic NFTs, collections, profiles, and preview
+images. Python 3 + Pillow is only needed to regenerate these fixtures with
+`npm run dev:fixtures`.
+
+See `.env.example` and `config.js` for direct service overrides.
 
 ## Production
 ```sh
-yarn start             # port 80, serves ../dingonft-frontend-private
+npm start
 ```
-All settings (port, build dir, public origin, storage/API endpoints, fetch timeout) can be overridden with environment variables; see `.env.example` and `config.js`.
+Set `FRONTEND_URL` to the frontend container/origin. Public metadata defaults to
+`https://nft.dingocoin.com`. All settings can be overridden with environment
+variables; see `.env.example` and `config.js`.
