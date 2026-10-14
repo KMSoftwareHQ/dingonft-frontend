@@ -18,7 +18,9 @@ The full stack runs the real provider with Postgres, MinIO, and `dingocoind`:
 docker compose up -d --build
 ```
 
-Open <http://localhost:3020/testing-nft-platform/>. The first node sync can take
+Open <http://localhost:3020/testing-nft-platform/>. `scripts/dev-up.sh --status`
+prints the state of every service; without `--status` it also starts the stack
+in the background if anything is down. The first node sync can take
 a long time; its chain data is kept in a named volume. API, object-storage, and
 database ports bind to loopback only.
 
@@ -58,12 +60,24 @@ npm --prefix services/provider test
 npm --prefix services/link ci
 ```
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to
+`master`:
+
+- `unit` — frontend lint, Vitest, and production build; link dependency
+  install; provider unit and compatibility tests.
+- `e2e` — validates `compose.e2e.yaml` and runs the Playwright suite.
+
+Both jobs run the same commands as the local checks above, so a green local run
+should match CI.
+
 ## Repository migration
 
-The imported component histories are preserved under their new paths. After
-this migration PR is merged, rename the GitHub repository from
-`dingonft-frontend` to `dingonft`; GitHub will redirect existing clone and PR
-URLs. Archive the old `dingonft-provider` and `dingonft-link` repositories only
+The imported component histories are preserved under their new paths. The
+GitHub repository is `dingocoin/dingonft`, renamed from `dingonft-frontend`;
+GitHub redirects old clone and PR URLs, but deployment and automation should
+use the new name. Archive the old `dingonft-provider` and `dingonft-link` repositories only
 after production has been cut over and rollback is no longer needed.
 
 Component-specific architecture notes live beside each component. Never commit

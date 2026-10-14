@@ -21,10 +21,18 @@ npm run lint
 npm test
 npm run build
 npm run test:e2e
+scripts/dev-up.sh --status   # one-screen state of the root Compose stack
 ```
 
 The full stack uses a real `dingocoind` and persistent state. E2E uses seeded
 MinIO data and a fixture API so it is fast and reproducible.
+
+`scripts/dev-up.sh` without `--status` starts the full stack detached if any
+service is down; the machine-local SessionStart hook only runs `--status`.
+
+CI is `.github/workflows/ci.yml`: a `unit` job (frontend lint/test/build,
+link install, provider tests) and an `e2e` job (`npm run test:e2e`). It runs on
+pull requests and pushes to `master`. Keep it in sync with the root commands.
 
 ## Git and releases
 

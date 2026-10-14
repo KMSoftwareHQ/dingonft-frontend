@@ -25,7 +25,7 @@ docker compose logs -f frontend
 docker compose down              # add -v to also drop the node_modules volume
 ```
 
-`scripts/dev-up.sh` checks the whole environment and starts whatever is down, detached, logging to `/tmp/dingonft-dev/` (`--status` only reports). A SessionStart hook in `.claude/settings.local.json` (machine-local, gitignored) runs it on every startup and resume, so its status appears at the top of the session.
+The root `scripts/dev-up.sh` reports the state of every root Compose service and, if anything is down, starts the stack detached with logs in `/tmp/dingonft-dev/` (`--status` only reports). A SessionStart hook in the root `.claude/settings.local.json` (machine-local, gitignored) runs it with `--status` on every startup and resume, so the status appears at the top of the session without kicking off a build or chain sync.
 
 `Dockerfile.dev` uses Node 24 LTS. The source is bind-mounted, and `node_modules` lives in a named volume. `npm ci` runs on every container start. Settings are in the root `compose.yaml`; override them with the root `.env` file.
 
