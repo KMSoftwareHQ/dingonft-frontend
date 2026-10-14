@@ -30,6 +30,12 @@ NFTS = {
         "description": "Nameless test NFT.",
         "color": (46, 160, 67),
     },
+    "DdevNftMarkup44444444444444444444": {
+        # user-controlled markup and String.replace patterns -> must be escaped
+        "name": "Markup \"><script>window.__ogInjected=1</script> $&",
+        "description": "<img src=x onerror=alert(1)> & 'quotes'",
+        "color": (90, 90, 90),
+    },
 }
 COLLECTIONS = {
     "dev-dingos": {

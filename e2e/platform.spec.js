@@ -68,3 +68,34 @@ test("unknown metadata routes fail without serving misleading previews", async (
   expect(response.status()).toBe(404);
   expect(await response.text()).toBe("Error: unknown path or asset");
 });
+
+test("Open Graph values from stored metadata are HTML-escaped", async ({
+  request,
+}) => {
+  const response = await request.get("nft/DdevNftMarkup44444444444444444444");
+  expect(response.ok()).toBeTruthy();
+
+  const html = await response.text();
+  expect(html).not.toContain("<script>window.__ogInjected");
+  expect(html).not.toContain("<img src=x");
+  expect(html).toContain(
+    'property="og:title" content="Markup &quot;&gt;&lt;script&gt;window.__ogInjected=1&lt;/script&gt; $&amp;"'
+  );
+  expect(html).toContain(
+    'property="og:description" content="&lt;img src=x onerror=alert(1)&gt; &amp; &#39;quotes&#39; | Dingocoin NFT Platform"'
+  );
+});
+
+test("Open Graph values from route params are HTML-escaped", async ({
+  request,
+}) => {
+  const address = '"><script>window.__ogInjected=1</script>';
+  const response = await request.get(`profile/${encodeURIComponent(address)}`);
+  expect(response.ok()).toBeTruthy();
+
+  const html = await response.text();
+  expect(html).not.toContain("<script>window.__ogInjected");
+  expect(html).toContain(
+    "<title>&quot;&gt;&lt;script&gt;window.__ogInjected=1&lt;/script&gt;</title>"
+  );
+});

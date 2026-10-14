@@ -39,7 +39,8 @@ npm run test:e2e
 
 The command builds the E2E topology, runs Playwright in Chromium, and tears the
 stack down. Set `E2E_KEEP_STACK=1` to leave it running for inspection at
-<http://localhost:3020/testing-nft-platform/>.
+<http://localhost:3020/testing-nft-platform/>. Set `E2E_PORT` (for example
+`E2E_PORT=3021`) to run it while the development stack holds port 3020.
 
 ## Frontend checks
 
