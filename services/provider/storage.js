@@ -17,12 +17,15 @@ const S3_CONFIG = {
   },
   forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 };
-const META_BUCKET = "dingo-nft-meta";
-const PREVIEW_BUCKET = "dingo-nft-preview";
-const CONTENT_BUCKET = "dingo-nft-content";
-const STATE_BUCKET = "dingo-nft-state";
-const PROFILE_BUCKET = "dingo-nft-profile";
-const COLLECTION_BUCKET = "dingo-nft-collection";
+// Same variable and default as services/link: production buckets are
+// dingo-nftc-0-{meta,preview,content,state,profile,collection}.
+const BUCKET_PREFIX = process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0";
+const META_BUCKET = `${BUCKET_PREFIX}-meta`;
+const PREVIEW_BUCKET = `${BUCKET_PREFIX}-preview`;
+const CONTENT_BUCKET = `${BUCKET_PREFIX}-content`;
+const STATE_BUCKET = `${BUCKET_PREFIX}-state`;
+const PROFILE_BUCKET = `${BUCKET_PREFIX}-profile`;
+const COLLECTION_BUCKET = `${BUCKET_PREFIX}-collection`;
 const CONTENT_AUTHORIZATION_TIMEOUT = 30; // In seconds.
 
 let s3 = null;

@@ -12,7 +12,7 @@ This is the backend of the NFT platform.
 ## Local development with Docker
 From the monorepo root, `docker compose up -d --build` starts a Dingocoin
 mainnet node, Postgres (schema loaded from `database/schema.sql`), MinIO with
-the `dingo-nft-*` buckets, and the provider on http://127.0.0.1:8090.
+the `dingo-nftc-0-*` buckets (`STORAGE_BUCKET_PREFIX`, same as production), and the provider on http://127.0.0.1:8090.
 
 - The node syncs from scratch into the `dingo-data` volume. The provider's live sync starts at block 430000, so it idles until the node gets there.
 - Dev secrets are generated on first start into the `provider-settings` volume. They are not the production secrets, so the dev platform and asset addresses are different, and production NFT transactions are not picked up.

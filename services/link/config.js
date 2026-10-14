@@ -35,7 +35,7 @@ const config = {
   // Object storage base; bucket names are appended in storage.js. Dev defaults
   // to local MinIO when running the root Compose stack.
   STORAGE_BASE:
-    process.env.STORAGE_BASE || (isDev ? "http://localhost:9000" : "https://ewr1.vultrobjects.com"),
+    process.env.STORAGE_BASE || (isDev ? "http://localhost:9000" : "https://nyc3.digitaloceanspaces.com"),
   STORAGE_BUCKET_PREFIX: process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0",
   API_URL: process.env.API_URL || "https://nftp0.dingocoin.io",
   FETCH_TIMEOUT_MS: Number(process.env.FETCH_TIMEOUT_MS) || 30000,
