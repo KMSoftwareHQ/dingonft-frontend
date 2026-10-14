@@ -1,5 +1,5 @@
 // VITE_STORAGE_BASE switches to a path-style S3 endpoint (e.g. the
-// dingonft-provider dev MinIO) where buckets are URL paths.
+// root Compose MinIO) where buckets are URL paths.
 // VITE_STORAGE_BUCKET_PREFIX matches the backend's bucket names.
 const STORAGE_BASE = import.meta.env.VITE_STORAGE_BASE;
 const BUCKET_PREFIX =

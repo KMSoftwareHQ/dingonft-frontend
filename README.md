@@ -1,34 +1,85 @@
-# Dingocoin NFT frontend
+# Dingocoin NFT platform
 
-React frontend for the Dingocoin NFT platform. Production is served at
-[nft.dingocoin.com](https://nft.dingocoin.com/).
+This monorepo contains the three deployable parts of the Dingocoin NFT
+platform:
 
-## Local setup
+- `apps/frontend` — React/Vite browser application
+- `services/link` — public edge server and Open Graph renderer
+- `services/provider` — API and blockchain indexer
 
-Requires Node.js 24 LTS and npm 12.
+Production is <https://nft.dingocoin.com>. The components remain separate
+containers so they can be built, deployed, restarted, and scaled independently.
 
-```bash
-npm ci
-npm run dev
+## Full development stack
+
+The full stack runs the real provider with Postgres, MinIO, and `dingocoind`:
+
+```sh
+docker compose up -d --build
 ```
 
-Useful checks:
+Open <http://localhost:3020/testing-nft-platform/>. `scripts/dev-up.sh --status`
+prints the state of every service; without `--status` it also starts the stack
+in the background if anything is down. The first node sync can take
+a long time; its chain data is kept in a named volume. API, object-storage, and
+database ports bind to loopback only.
 
-```bash
+Copy `.env.example` to `.env` to override ports or the test sub-path. The
+checked-in defaults are development-only; production remains
+`https://nft.dingocoin.com` and is not started by this Compose file.
+
+## Deterministic E2E stack
+
+The browser suite uses the real frontend and link containers with seeded object
+storage and a deterministic API fixture. It does not wait for blockchain sync:
+
+```sh
+npm run test:e2e
+```
+
+The command builds the E2E topology, runs Playwright in Chromium, and tears the
+stack down. Set `E2E_KEEP_STACK=1` to leave it running for inspection at
+<http://localhost:3020/testing-nft-platform/>.
+
+## Frontend checks
+
+Node 24 LTS and npm 12 are expected when running checks without Docker:
+
+```sh
+npm --prefix apps/frontend ci
 npm run lint
 npm test
 npm run build
 ```
 
-The full test environment runs under Docker at
-`http://localhost:3020/testing-nft-platform/`:
+The provider and edge use the same Node/npm baseline:
 
-```bash
-docker compose up -d --build
+```sh
+npm --prefix services/provider ci
+npm --prefix services/provider test
+npm --prefix services/link ci
 ```
 
-Start the sibling `dingonft-provider` stack first so the API and storage
-proxies have live targets. See [.env.example](.env.example) for overrides.
+## Continuous integration
 
-Open Graph placeholders in `index.html` are populated by
-[dingonft-link](https://github.com/rkbling/dingonft-link) in production.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to
+`master`:
+
+- `unit` — frontend lint, Vitest, and production build; link dependency
+  install; provider unit and compatibility tests.
+- `e2e` — validates `compose.e2e.yaml` and runs the Playwright suite.
+
+Both jobs run the same commands as the local checks above, so a green local run
+should match CI.
+
+## Repository migration
+
+The imported component histories are preserved under their new paths. The
+GitHub repository is `dingocoin/dingonft`, renamed from `dingonft-frontend`;
+GitHub redirects old clone and PR URLs, but deployment and automation should
+use the new name. Archive the old `dingonft-provider` and `dingonft-link` repositories only
+after production has been cut over and rollback is no longer needed.
+
+Component-specific architecture notes live beside each component. Never commit
+production secrets; all checked-in credentials and chain keys are development
+fixtures only.

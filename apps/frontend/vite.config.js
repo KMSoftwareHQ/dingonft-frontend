@@ -29,6 +29,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const base = normaliseBase(env.BASE_PATH);
   const basePath = base === "/" ? "" : base.slice(0, -1);
+  const proxyConfig = {
+    ...proxy(basePath, "/storage", env.DEV_STORAGE_PROXY_TARGET),
+    ...proxy(basePath, "/api", env.DEV_API_PROXY_TARGET),
+  };
 
   return {
     base,
@@ -42,20 +46,20 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: "0.0.0.0",
+      allowedHosts: ["frontend"],
       port: 3000,
       strictPort: true,
       hmr: {
         path: `${basePath}/__vite_hmr`,
       },
-      proxy: {
-        ...proxy(basePath, "/storage", env.DEV_STORAGE_PROXY_TARGET),
-        ...proxy(basePath, "/api", env.DEV_API_PROXY_TARGET),
-      },
+      proxy: proxyConfig,
     },
     preview: {
       host: "0.0.0.0",
+      allowedHosts: ["frontend"],
       port: 3000,
       strictPort: true,
+      proxy: proxyConfig,
     },
     test: {
       environment: "node",
