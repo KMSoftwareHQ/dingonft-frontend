@@ -24,3 +24,13 @@ the `dingo-nftc-0-*` buckets (`STORAGE_BUCKET_PREFIX`, same as production), and 
 - `npm test` runs offline: the database tests replace `pg` with an in-memory fake.
 - Set `DISCORD_WEBHOOK_URL` to post confirmed listings, price updates, and sales to Discord. Only events within 30 blocks of the tip are announced, so catch-up and reindexing stay quiet. Mentions are disabled.
 - Presigned content URLs from `/nft/getContent` point at `http://minio:9000`, which is only resolvable inside the compose network.
+
+## Public object ACLs
+DigitalOcean Spaces objects are private unless uploaded `public-read`, and overwriting an object without the ACL makes it private again. Every upload to the meta, preview, state, profile and collection buckets therefore goes through `putPublic` in `storage.js`; `content` stays private and is served through presigned URLs. NFTs whose state was rewritten by an older provider without the ACL show a 403 on their state object.
+
+`scripts/repair-acl.js` lists the public buckets, checks each object with an anonymous HEAD, and with `--apply` sets `public-read` on the unreadable ones. On the production host, from the monorepo root:
+
+    docker compose -f compose.prod.yaml --env-file .env.prod exec provider node scripts/repair-acl.js           # report only
+    docker compose -f compose.prod.yaml --env-file .env.prod exec provider node scripts/repair-acl.js --apply
+
+`--bucket=state` limits it to some buckets, and `--concurrency=N` (default 16) sets parallel requests. It exits 1 while any object is still unreadable. MinIO doesn't implement object ACLs, so `--apply` only works against Spaces.
