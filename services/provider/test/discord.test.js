@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 process.env.DISCORD_WEBHOOK_URL = 'https://discord.invalid/webhook';
-const { notify, buildPayload } = require('../discord');
+const { notify, buildPayload, formatPrice } = require('../discord');
 
 const address = 'DQm6RjBfsjS6hzoDiA158CTLPRudkikXiq';
 const buyer = 'DTmNGunrovHSyyNfgKw787BsauaZGdCTr9';
@@ -47,4 +47,27 @@ test('a failing webhook is logged, never thrown', async (t) => {
     { fetchImpl: async () => ({ ok: false, status: 429 }) }
   );
   assert.equal(log.mock.callCount(), 2);
+});
+
+test('formats prices for display', () => {
+  const sat = (dingo) => {
+    const [whole, fraction = ''] = dingo.split('.');
+    return (BigInt(whole) * 100000000n + BigInt(fraction.padEnd(8, '0'))).toString();
+  };
+  const cases = {
+    '0.5': '0.5',
+    '1111': '1,111',
+    '1111.5': '1,111.5',
+    '99999.99': '99,999.99',
+    '100000': '100k',
+    '333333': '333k',
+    '999999': '1M',
+    '1250000': '1.3M',
+    '2000000': '2M',
+    '999999999': '1B',
+    '2500000000': '2.5B',
+  };
+  for (const [dingo, expected] of Object.entries(cases)) {
+    assert.equal(formatPrice(sat(dingo)), expected, dingo);
+  }
 });

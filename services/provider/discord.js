@@ -18,6 +18,37 @@ const EVENTS = {
   buy: { title: "Sold", color: 0x1f6feb },
 };
 
+const withCommas = (digits) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+// Display price from satoshis: 1,111 / 1,111.5 below 100k, then 333k, 1.3M,
+// 2.5B. Rounding carries into the next unit (999,999 -> 1M).
+function formatPrice(satoshis) {
+  const exact = fromSatoshi(String(satoshis));
+  const [whole, fraction] = exact.split(".");
+  const value = Number(exact);
+  if (value < 100_000) {
+    return fraction ? `${withCommas(whole)}.${fraction}` : withCommas(whole);
+  }
+  const units = [
+    [1e9, "B", 1],
+    [1e6, "M", 1],
+    [1e3, "k", 0],
+  ];
+  for (let i = 0; i < units.length; i++) {
+    const [size, suffix, decimals] = units[i];
+    if (value < size) {
+      continue;
+    }
+    const rounded = Number((value / size).toFixed(decimals));
+    if (rounded >= 1000 && i > 0) {
+      const [biggerSize, biggerSuffix] = units[i - 1];
+      return `${Number((value / biggerSize).toFixed(1))}${biggerSuffix}`;
+    }
+    return `${rounded}${suffix}`;
+  }
+  return exact;
+}
+
 const shortAddress = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const profileLink = (address) => `[${shortAddress(address)}](${PUBLIC_URL}/profile/${address})`;
 
@@ -27,7 +58,7 @@ const cleanName = (name) =>
 
 function buildPayload({ kind, address, name, txid, price, seller, buyer, owner }) {
   const event = EVENTS[kind];
-  const fields = [{ name: "Price", value: `${fromSatoshi(price)} DINGO`, inline: true }];
+  const fields = [{ name: "Price", value: `${formatPrice(price)} DINGO`, inline: true }];
   if (kind === "buy") {
     fields.push({ name: "Seller", value: profileLink(seller), inline: true });
     fields.push({ name: "Buyer", value: profileLink(buyer), inline: true });
@@ -75,4 +106,4 @@ async function notify(event, { fetchImpl = fetch } = {}) {
   }
 }
 
-module.exports = { notify, buildPayload };
+module.exports = { notify, buildPayload, formatPrice };
