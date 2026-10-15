@@ -41,12 +41,16 @@ const {
 } = require("./transactionProcessing");
 const AsyncLock = require("async-lock");
 const asyncHandler = require("./asyncHandler");
+const discord = require("./discord");
 
 const MAX_CONTENT_LENGTH = 10 * 1e6; // 10 MB
 const MAX_PREVIEW_LENGTH = 1 * 1e6; // 1 MB
 const ACTIVITY_DECAY = 0.1 ** (1 / 1440); // Decay by 90% every 24 hours.
 
 const DINGO_NFTP1_HEIGHT = 511272; // Disable increasing price in reprice.
+// Only announce events this close to the chain tip, so catch-up and reindexing
+// do not replay history into Discord.
+const DISCORD_LIVE_WINDOW = 30; // Blocks.
 
 const isPng = (buffer) => {
   if (!buffer || buffer.length < 8) {
@@ -190,6 +194,15 @@ const isWebp = (buffer) => {
   }
   const liveStep = async () => {
     const targetHeight = (await dingo.getBlockchainInfo()).blocks;
+    const announce = (event) => {
+      if (targetHeight - height > DISCORD_LIVE_WINDOW) {
+        return;
+      }
+      database
+        .getAsset(event.address)
+        .then((asset) => discord.notify({ ...event, name: asset && asset.name }))
+        .catch((e) => console.log(`[Discord] Skipped ${event.kind} ${event.txid}: ${e.message}`));
+    };
     while (height <= targetHeight) {
       // Get block.
       const block = await dingo.getBlock(await dingo.getBlockHash(height));
@@ -236,6 +249,7 @@ const isWebp = (buffer) => {
               owner: tx.owner,
               stats: nftStats,
             });
+            announce({ kind: "list", address: tx.address, txid, price: tx.price, owner: tx.owner });
           }
         } else if (
           (tx = repriceTransactionProcessor.infer(unverifiedTx)) !== null
@@ -279,6 +293,7 @@ const isWebp = (buffer) => {
               owner: nftStats.owner,
               stats: nftStats,
             });
+            announce({ kind: "reprice", address: tx.address, txid, price: tx.price, owner: nftStats.owner });
           }
         } else if (
           (tx = buyTransactionProcessor.infer(unverifiedTx)) !== null
@@ -379,6 +394,14 @@ const isWebp = (buffer) => {
                 owner: tx.owner,
                 stats: nftStats,
               });
+              announce({
+                kind: "buy",
+                address: tx.address,
+                txid,
+                price: sellTx.price,
+                seller: sellTx.owner,
+                buyer: tx.owner,
+              });
             }
           }
         }
@@ -404,6 +427,7 @@ const isWebp = (buffer) => {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "15mb" }));
+  app.get("/healthz", (_req, res) => res.json({ status: "ok", height }));
 
   app.post(
     "/nft/getListTransaction",
@@ -1351,7 +1375,7 @@ const isWebp = (buffer) => {
     })
   );
 
-  app.listen(80, () => {
+  app.listen(Number(process.env.PORT) || 80, () => {
     console.log("Started");
   });
 })();

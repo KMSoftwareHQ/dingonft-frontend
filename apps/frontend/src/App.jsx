@@ -186,7 +186,7 @@ export default function App() {
       </section>
       <section>
         <div className="justify-content-center section-footer align-items-center">
-          <h6>Copyright © The Dingocoin Project 2021-2022</h6>
+          <h6>Copyright © The Dingocoin Project 2021-{new Date().getFullYear()}</h6>
         </div>
       </section>
 

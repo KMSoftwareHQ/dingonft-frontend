@@ -1,6 +1,7 @@
+-- Idempotent: safe to re-run against an existing database. Never add DROP
+-- statements here; it is applied to production.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-DROP TABLE IF EXISTS profiles;
 CREATE TABLE IF NOT EXISTS profiles (
   id SERIAL PRIMARY KEY,
   owner TEXT UNIQUE NOT NULL,
@@ -10,7 +11,6 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_owner ON profiles (owner);
 CREATE INDEX IF NOT EXISTS idx_profiles_name ON profiles (name);
 
-DROP TABLE IF EXISTS collections;
 CREATE TABLE IF NOT EXISTS collections (
   id SERIAL PRIMARY KEY,
   owner TEXT NOT NULL,
@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS collections (
 CREATE INDEX IF NOT EXISTS idx_collections_handle ON collections(handle);
 CREATE INDEX IF NOT EXISTS idx_collections_owner ON collections(owner);
 
-DROP TABLE IF EXISTS assets;
 CREATE TABLE IF NOT EXISTS assets (
   id SERIAL PRIMARY KEY,
   collection TEXT,
@@ -38,7 +37,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_address ON assets (address);
 CREATE INDEX IF NOT EXISTS idx_assets_name ON assets (name);
 CREATE INDEX IF NOT EXISTS idx_assets_tags ON assets (tags);
 
-DROP TABLE IF EXISTS transactions;
 CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,
   address TEXT NOT NULL,
@@ -51,7 +49,6 @@ CREATE INDEX IF NOT EXISTS idx_transactions_owner ON transactions (owner);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_txid ON transactions (txid);
 CREATE INDEX IF NOT EXISTS idx_transactions_height ON transactions (height);
 
-DROP TABLE IF EXISTS nftStats;
 CREATE TABLE IF NOT EXISTS nftStats (
   id SERIAL PRIMARY KEY,
   address TEXT UNIQUE NOT NULL,
@@ -74,7 +71,6 @@ CREATE INDEX IF NOT EXISTS idx_nftStats_tradeCount ON nftStats (tradeCount);
 CREATE INDEX IF NOT EXISTS idx_nftStats_tradeVolume ON nftStats (tradeVolume);
 CREATE INDEX IF NOT EXISTS idx_nftStats_price ON nftStats (price);
 
-DROP TABLE IF EXISTS profileStats;
 CREATE TABLE IF NOT EXISTS profileStats (
   id SERIAL PRIMARY KEY,
   owner TEXT UNIQUE NOT NULL,

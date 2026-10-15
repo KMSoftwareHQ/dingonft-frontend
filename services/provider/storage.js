@@ -17,12 +17,17 @@ const S3_CONFIG = {
   },
   forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 };
-const META_BUCKET = "dingo-nft-meta";
-const PREVIEW_BUCKET = "dingo-nft-preview";
-const CONTENT_BUCKET = "dingo-nft-content";
-const STATE_BUCKET = "dingo-nft-state";
-const PROFILE_BUCKET = "dingo-nft-profile";
-const COLLECTION_BUCKET = "dingo-nft-collection";
+// Everything except content is read directly by browsers and link, and
+// DigitalOcean Spaces objects are private unless uploaded public-read.
+// Same variable and default as services/link: production buckets are
+// dingo-nftc-0-{meta,preview,content,state,profile,collection}.
+const BUCKET_PREFIX = process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0";
+const META_BUCKET = `${BUCKET_PREFIX}-meta`;
+const PREVIEW_BUCKET = `${BUCKET_PREFIX}-preview`;
+const CONTENT_BUCKET = `${BUCKET_PREFIX}-content`;
+const STATE_BUCKET = `${BUCKET_PREFIX}-state`;
+const PROFILE_BUCKET = `${BUCKET_PREFIX}-profile`;
+const COLLECTION_BUCKET = `${BUCKET_PREFIX}-collection`;
 const CONTENT_AUTHORIZATION_TIMEOUT = 30; // In seconds.
 
 let s3 = null;
@@ -36,6 +41,7 @@ const uploadMeta = (address, meta) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: META_BUCKET,
+      ACL: "public-read",
       Key: address,
       Body: JSON.stringify(meta),
       ContentType: "application/json"
@@ -47,6 +53,7 @@ const uploadPreview = (address, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: PREVIEW_BUCKET,
+      ACL: "public-read",
       Key: address + ".png",
       Body: data,
       ContentType: "image/png"
@@ -92,6 +99,7 @@ const uploadState = async (address, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: STATE_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: address,
       Body: JSON.stringify(data),
@@ -104,6 +112,7 @@ const uploadProfile = (owner, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: PROFILE_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: owner,
       Body: JSON.stringify(data),
@@ -116,6 +125,7 @@ const uploadCollection = (handle, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: COLLECTION_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: handle,
       Body: JSON.stringify(data),

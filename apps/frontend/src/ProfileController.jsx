@@ -860,7 +860,7 @@ function ProfileController() {
                   <a
                     className="simple-link"
                     href={
-                      "https://openchains.info/coin/dingocoin/tx/" +
+                      "https://explorer.dingocoin.com/tx/" +
                       nftBusy.txid
                     }
                     rel="noreferrer"
@@ -925,7 +925,7 @@ function ProfileController() {
                   <a
                     className="simple-link"
                     href={
-                      "https://openchains.info/coin/dingocoin/tx/" +
+                      "https://explorer.dingocoin.com/tx/" +
                       buyResult.txid
                     }
                     rel="noreferrer"
@@ -969,7 +969,7 @@ function ProfileController() {
                   <a
                     className="simple-link"
                     href={
-                      "https://openchains.info/coin/dingocoin/tx/" +
+                      "https://explorer.dingocoin.com/tx/" +
                       nftBusy.txid
                     }
                     rel="noreferrer"
@@ -1035,7 +1035,7 @@ function ProfileController() {
                   <a
                     className="simple-link"
                     href={
-                      "https://openchains.info/coin/dingocoin/tx/" +
+                      "https://explorer.dingocoin.com/tx/" +
                       repriceResult.txid
                     }
                     rel="noreferrer"

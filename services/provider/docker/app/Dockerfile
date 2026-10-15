@@ -6,4 +6,6 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY . .
+RUN mkdir -p /settings && chown node:node /settings
+USER node
 ENTRYPOINT ["sh", "docker/app/entrypoint.sh"]

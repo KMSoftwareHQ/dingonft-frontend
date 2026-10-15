@@ -594,9 +594,11 @@ async function queryCollectionByScaled(key, decay, height, limit) {
     return null;
   }
 
+  // Capping the decay exponent and skipping never-traded NFTs matches the fix
+  // deployed on the previous production backend (POWER underflowed for old trades).
   return (
     await db.query(
-      `SELECT COALESCE(SUM(CAST(nftStats.${key} AS DOUBLE PRECISION) * POWER($1, $2 - nftStats.tradeHeight)), 0) AS activity, assets.collection AS handle FROM nftStats INNER JOIN assets ON nftStats.address=assets.address WHERE assets.collection IS NOT NULL GROUP BY assets.collection ORDER by activity DESC LIMIT ${parseInt(limit)}`,
+      `SELECT COALESCE(SUM(CAST(nftStats.${key} AS DOUBLE PRECISION) * POWER($1, LEAST($2 - nftStats.tradeHeight, 15000))), 0) AS activity, assets.collection AS handle FROM nftStats INNER JOIN assets ON nftStats.address=assets.address WHERE assets.collection IS NOT NULL AND nftStats.tradeHeight IS NOT NULL GROUP BY assets.collection ORDER BY activity DESC LIMIT ${parseInt(limit)}`,
       [decay, height]
     )
   ).rows.map((x) => x.handle);

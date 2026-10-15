@@ -32,10 +32,19 @@ const config = {
   // In the monorepo the frontend is independently deployed. The edge fetches
   // its index template and proxies assets/API requests to this origin.
   FRONTEND_URL: process.env.FRONTEND_URL || "",
+  // When set, <BASE_PATH>/api/* is proxied to the provider so the browser can
+  // use a same-origin API (production sets VITE_API_URL=/api).
+  // Comma-separated IPs/CIDRs. When set, every route except /healthz returns
+  // 403 for other clients (pre-launch lockdown). Empty disables it.
+  ALLOWED_IPS: (process.env.ALLOWED_IPS || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean),
+  API_PROXY_URL: (process.env.API_PROXY_URL || "").replace(/\/+$/, ""),
   // Object storage base; bucket names are appended in storage.js. Dev defaults
   // to local MinIO when running the root Compose stack.
   STORAGE_BASE:
-    process.env.STORAGE_BASE || (isDev ? "http://localhost:9000" : "https://ewr1.vultrobjects.com"),
+    process.env.STORAGE_BASE || (isDev ? "http://localhost:9000" : "https://nyc3.digitaloceanspaces.com"),
   STORAGE_BUCKET_PREFIX: process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0",
   API_URL: process.env.API_URL || "https://nftp0.dingocoin.io",
   FETCH_TIMEOUT_MS: Number(process.env.FETCH_TIMEOUT_MS) || 30000,

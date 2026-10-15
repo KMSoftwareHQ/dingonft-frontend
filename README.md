@@ -61,6 +61,22 @@ npm --prefix services/provider test
 npm --prefix services/link ci
 ```
 
+## Production
+
+`compose.prod.yaml` runs the production topology behind Cloudflare (SSL mode
+Flexible): link is the only published service (port 80), serves the static
+frontend with Open Graph metadata, and proxies `/api` to the provider. Object
+storage is DigitalOcean Spaces (`dingo-nftc-0-*`).
+
+```sh
+cp .env.prod.example .env.prod   # fill in, chmod 600
+docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+```
+
+The provider refuses to start without the original production
+`ADDRESSING_SECRET` and `PLATFORM_PRIVATE_KEY`. `database/schema.sql` is
+idempotent and never drops tables.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and on pushes to

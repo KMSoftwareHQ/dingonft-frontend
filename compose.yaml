@@ -13,7 +13,7 @@ services:
       BASE_PATH: ${BASE_PATH:-/testing-nft-platform}
       VITE_API_URL: ${VITE_API_URL:-/testing-nft-platform/api}
       VITE_STORAGE_BASE: ${VITE_STORAGE_BASE:-/testing-nft-platform/storage}
-      VITE_STORAGE_BUCKET_PREFIX: ${VITE_STORAGE_BUCKET_PREFIX:-dingo-nft-}
+      VITE_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}-
       DEV_API_PROXY_TARGET: http://provider:80
       DEV_STORAGE_PROXY_TARGET: http://minio:9000
     volumes:
@@ -42,7 +42,7 @@ services:
       LOGO: ${PUBLIC_URL:-http://localhost:3020/testing-nft-platform}/dingocoin.png
       FRONTEND_URL: http://frontend:3000
       STORAGE_BASE: http://minio:9000
-      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nft}
+      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
     volumes:
       - ./services/link:/app
       - link-node-modules:/app/node_modules
@@ -81,6 +81,7 @@ services:
       S3_ACCESS_KEY_ID: minioadmin
       S3_SECRET_ACCESS_KEY: minioadmin
       S3_FORCE_PATH_STYLE: "true"
+      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
     volumes:
       - ./services/provider:/app
       - provider-node-modules:/app/node_modules
@@ -141,13 +142,15 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
     entrypoint: ["sh", "-c"]
     command:
       - |
         set -e
         mc alias set local http://minio:9000 minioadmin minioadmin
-        for b in meta preview content state profile collection; do mc mb --ignore-existing local/dingo-nft-$$b; done
-        for b in meta preview state profile collection; do mc anonymous set download local/dingo-nft-$$b; done
+        for b in meta preview content state profile collection; do mc mb --ignore-existing local/$${STORAGE_BUCKET_PREFIX}-$$b; done
+        for b in meta preview state profile collection; do mc anonymous set download local/$${STORAGE_BUCKET_PREFIX}-$$b; done
 
 volumes:
   dingo-data:
