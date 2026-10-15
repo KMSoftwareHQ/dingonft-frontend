@@ -40,6 +40,7 @@ const {
   BuyTransactionProcessor,
 } = require("./transactionProcessing");
 const AsyncLock = require("async-lock");
+const asyncHandler = require("./asyncHandler");
 
 const MAX_CONTENT_LENGTH = 10 * 1e6; // 10 MB
 const MAX_PREVIEW_LENGTH = 1 * 1e6; // 1 MB
@@ -79,19 +80,6 @@ const isWebp = (buffer) => {
     buffer[11] === 0x50
   );
 };
-
-function asyncHandler(fn) {
-  return async function (req, res) {
-    try {
-      return await fn(req, res);
-    } catch (err) {
-      console.log(`>>>>> ERROR START [${new Date().toUTCString()}] >>>>>\n`);
-      console.log(err);
-      console.log("<<<<<< ERROR END <<<<<<\n");
-      res.status(500).json(err.stack);
-    }
-  };
-}
 
 (async function main() {
   // Initialize settings.
@@ -193,11 +181,12 @@ function asyncHandler(fn) {
 
   /* ===== Automata and REPL state ===== */
   console.log("Starting live sync...");
+  // Resume at the last recorded block, not the one after it: a crash part-way
+  // through a block must not skip its remaining transactions. Transactions
+  // already recorded are skipped below, so reprocessing a block is safe.
   let height = await database.getLastTransactionHeight();
   if (height === null) {
     height = 430000;
-  } else {
-    height += 1;
   }
   const liveStep = async () => {
     const targetHeight = (await dingo.getBlockchainInfo()).blocks;
@@ -206,38 +195,41 @@ function asyncHandler(fn) {
       const block = await dingo.getBlock(await dingo.getBlockHash(height));
       // Iterate trasactions.
       for (const txid of block.tx.sort()) {
+        if (await database.hasTransaction(txid)) {
+          continue;
+        }
         const unverifiedTx = await getNftTransaction(txid);
         let tx = null;
         if ((tx = listTransactionProcessor.infer(unverifiedTx)) !== null) {
           // Verify.
           if ((await database.getAssetNonce(tx.address)) === tx.nonce) {
             console.log(`${height} | PROC LIST | ${txid}`);
-            // Initialize database transaction.
-            await database.beginTransaction();
-            // Add transaction to database.
-            await database.addTransaction({
-              address: tx.address,
-              owner: tx.owner,
-              txid: txid,
-              height: height,
+            // Record the transaction and its stats atomically.
+            const nftStats = await database.transaction(async () => {
+              // Add transaction to database.
+              await database.addTransaction({
+                address: tx.address,
+                owner: tx.owner,
+                txid: txid,
+                height: height,
+              });
+              // Update nft stats.
+              const nftStats = await database.getNftStats(tx.address);
+              nftStats.creator = tx.owner;
+              nftStats.owner = tx.owner;
+              nftStats.listHeight = height;
+              nftStats.price = tx.price;
+              await database.setNftStats(nftStats);
+              // Update profile stats.
+              const profileStats = await database.getProfileStats(tx.owner);
+              if (profileStats.firstListHeight === null) {
+                profileStats.firstListHeight = height;
+              }
+              profileStats.lastListHeight = height;
+              profileStats.listCount += 1;
+              await database.setProfileStats(profileStats);
+              return nftStats;
             });
-            // Update nft stats.
-            const nftStats = await database.getNftStats(tx.address);
-            nftStats.creator = tx.owner;
-            nftStats.owner = tx.owner;
-            nftStats.listHeight = height;
-            nftStats.price = tx.price;
-            await database.setNftStats(nftStats);
-            // Update profile stats.
-            const profileStats = await database.getProfileStats(tx.owner);
-            if (profileStats.firstListHeight === null) {
-              profileStats.firstListHeight = height;
-            }
-            profileStats.lastListHeight = height;
-            profileStats.listCount += 1;
-            await database.setProfileStats(profileStats);
-            // Complete database transaction.
-            await database.endTransaction();
             // Upload nft state.
             await storage.uploadState(tx.address, {
               creator: tx.owner,
@@ -267,21 +259,21 @@ function asyncHandler(fn) {
           // Verify tx against chain.
           if (repriceTransactionProcessor.verify(height >= DINGO_NFTP1_HEIGHT ? null : sellTx, lastTx, tx) !== null) {
             console.log(`${height} | PROC REPR  | ${txid}`);
-            // Initialize database transaction.
-            await database.beginTransaction();
-            // Add transaction to database.
-            await database.addTransaction({
-              address: tx.address,
-              owner: tx.owner,
-              txid: txid,
-              height: height,
+            // Record the transaction and its stats atomically.
+            const nftStats = await database.transaction(async () => {
+              // Add transaction to database.
+              await database.addTransaction({
+                address: tx.address,
+                owner: tx.owner,
+                txid: txid,
+                height: height,
+              });
+              // Update NFT stats.
+              const nftStats = await database.getNftStats(tx.address);
+              nftStats.price = tx.price;
+              await database.setNftStats(nftStats);
+              return nftStats;
             });
-            // Update NFT stats.
-            const nftStats = await database.getNftStats(tx.address);
-            nftStats.price = tx.price;
-            await database.setNftStats(nftStats);
-            // End database transaction
-            await database.endTransaction();
             await storage.uploadState(tx.address, {
               creator: nftStats.creator,
               owner: nftStats.owner,
@@ -320,68 +312,68 @@ function asyncHandler(fn) {
             );
             if (paymentDetails !== null) {
               console.log(`${height} | PROC BUY  | ${txid}`);
-              // Initialize database transaction.
-              await database.beginTransaction();
-              // Add transaction to database.
-              await database.addTransaction({
-                address: tx.address,
-                owner: tx.owner,
-                txid: txid,
-                height: height,
+              // Record the transaction and its stats atomically.
+              const nftStats = await database.transaction(async () => {
+                // Add transaction to database.
+                await database.addTransaction({
+                  address: tx.address,
+                  owner: tx.owner,
+                  txid: txid,
+                  height: height,
+                });
+                // Update NFT stats.
+                const nftStats = await database.getNftStats(tx.address);
+                nftStats.owner = tx.owner;
+                if (nftStats.tradeHeight !== null) {
+                  // Decay previous activity if exists.
+                  nftStats.tradeCountScaled *=
+                    ACTIVITY_DECAY ** (height - nftStats.tradeHeight);
+                  nftStats.tradeVolumeScaled *=
+                    ACTIVITY_DECAY ** (height - nftStats.tradeHeight);
+                }
+                nftStats.tradeHeight = height;
+                nftStats.tradeCount += 1;
+                nftStats.tradeVolume = (
+                  BigInt(nftStats.tradeVolume) + BigInt(sellTx.price)
+                ).toString();
+                nftStats.price = tx.price;
+                nftStats.tradeCountScaled += 1;
+                nftStats.tradeVolumeScaled += parseFloat(
+                  BigInt(sellTx.price) / BigInt(1e8)
+                );
+                await database.setNftStats(nftStats);
+                // Update creator profile stats.
+                const listerProfileStats = await database.getProfileStats(
+                  listTx.owner
+                );
+                listerProfileStats.listSoldCount += 1;
+                listerProfileStats.royaltyVolume = (
+                  BigInt(listerProfileStats.royaltyVolume) +
+                  BigInt(paymentDetails.royalty)
+                ).toString();
+                await database.setProfileStats(listerProfileStats);
+                // Update seller profile stats.
+                const sellerProfileStats = await database.getProfileStats(
+                  sellTx.owner
+                );
+                sellerProfileStats.tradeHeight = height;
+                sellerProfileStats.tradeCount += 1;
+                sellerProfileStats.sellVolume = (
+                  BigInt(sellerProfileStats.sellVolume) + BigInt(sellTx.price)
+                ).toString();
+                await database.setProfileStats(sellerProfileStats);
+                // Update buyer profile stats.
+                const buyerProfileStats = await database.getProfileStats(
+                  tx.owner
+                );
+                buyerProfileStats.tradeHeight = height;
+                buyerProfileStats.tradeCount += 1;
+                buyerProfileStats.buyVolume = (
+                  BigInt(buyerProfileStats.buyVolume) + BigInt(sellTx.price)
+                ).toString();
+                await database.setProfileStats(buyerProfileStats);
+                return nftStats;
               });
-              // Update NFT stats.
-              const nftStats = await database.getNftStats(tx.address);
-              nftStats.owner = tx.owner;
-              if (nftStats.tradeHeight !== null) {
-                // Decay previous activity if exists.
-                nftStats.tradeCountScaled *=
-                  ACTIVITY_DECAY ** (height - nftStats.tradeHeight);
-                nftStats.tradeVolumeScaled *=
-                  ACTIVITY_DECAY ** (height - nftStats.tradeHeight);
-              }
-              nftStats.tradeHeight = height;
-              nftStats.tradeCount += 1;
-              nftStats.tradeVolume = (
-                BigInt(nftStats.tradeVolume) + BigInt(sellTx.price)
-              ).toString();
-              nftStats.price = tx.price;
-              nftStats.tradeCountScaled += 1;
-              nftStats.tradeVolumeScaled += parseFloat(
-                BigInt(sellTx.price) / BigInt(1e8)
-              );
-              await database.setNftStats(nftStats);
-              // Update creator profile stats.
-              const listerProfileStats = await database.getProfileStats(
-                listTx.owner
-              );
-              listerProfileStats.listSoldCount += 1;
-              listerProfileStats.royaltyVolume = (
-                BigInt(listerProfileStats.royaltyVolume) +
-                BigInt(paymentDetails.royalty)
-              ).toString();
-              await database.setProfileStats(listerProfileStats);
-              // Update seller profile stats.
-              const sellerProfileStats = await database.getProfileStats(
-                sellTx.owner
-              );
-              sellerProfileStats.tradeHeight = height;
-              sellerProfileStats.tradeCount += 1;
-              sellerProfileStats.sellVolume = (
-                BigInt(sellerProfileStats.sellVolume) + BigInt(sellTx.price)
-              ).toString();
-              await database.setProfileStats(sellerProfileStats);
-              // Update buyer profile stats.
-              const buyerProfileStats = await database.getProfileStats(
-                tx.owner
-              );
-              buyerProfileStats.tradeHeight = height;
-              buyerProfileStats.tradeCount += 1;
-              buyerProfileStats.buyVolume = (
-                BigInt(buyerProfileStats.buyVolume) + BigInt(sellTx.price)
-              ).toString();
-              await database.setProfileStats(buyerProfileStats);
-              // End database transaction
-              await database.endTransaction();
               await storage.uploadState(tx.address, {
                 creator: listTx.owner,
                 owner: tx.owner,
@@ -395,11 +387,17 @@ function asyncHandler(fn) {
       console.log("[Live sync] Height = " + height + " / " + targetHeight);
       height += 1;
     }
-    setTimeout(() => liveStep().catch(console.log), 1000);
   };
-  liveStep().catch((e) => {
-    console.log(e);
-  });
+  // Keep syncing after transient failures (RPC timeouts, database restarts).
+  // The current block is retried; already-recorded transactions are skipped.
+  const scheduleLiveStep = () => {
+    liveStep()
+      .catch((e) => {
+        console.log(`[Live sync] Error at height ${height}, retrying:`, e);
+      })
+      .finally(() => setTimeout(scheduleLiveStep, 1000));
+  };
+  scheduleLiveStep();
 
   /* ===== Interface ===== */
 

@@ -57,5 +57,6 @@ Async route handlers are wrapped in the `asyncHandler` helper in `app.js`, which
 
 ## Conventions
 
+- OG values (titles, descriptions, route params) are user-controlled. `makeHtml()` HTML-escapes every value and substitutes with a replacer function so `$&`-style patterns are not expanded; keep new template values going through it. The E2E suite has stored and reflected injection cases.
 - Missing NFT or collection → `404` with a plain-text error. Missing profile → still `200` with the address used as title and an empty image; keep this asymmetry unless intentionally changing it.
 - The mixed/odd indentation in `storage.js` and `utils.js` is pre-existing; don't reformat unrelated files when making changes.

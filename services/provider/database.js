@@ -7,20 +7,28 @@ const debug = (x) => {
   }
 };
 
+const { AsyncLocalStorage } = require('node:async_hooks');
 const pg = require('pg');
 
-let db = null;
+let pool = null;
+// Queries inside transaction() run on that transaction's dedicated client;
+// everything else runs on the shared pool.
+const transactionClient = new AsyncLocalStorage();
+const db = {
+  query: (...args) => (transactionClient.getStore() || pool).query(...args),
+};
 
 module.exports = {
   load,
-  beginTransaction,
-  endTransaction,
+  close,
+  transaction,
 
   addAsset,
   hasAsset,
   getAsset,
 
   getLastTransactionHeight,
+  hasTransaction,
   getTransactions,
   getFirstTransaction,
   getLastTransaction,
@@ -67,16 +75,45 @@ module.exports = {
 };
 
 async function load() {
-  db = new pg.Client(process.env.DATABASE_URL || 'postgres://dingo:dingopassword@localhost:5432/dingo');
-  await db.connect();
+  pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL || 'postgres://dingo:dingopassword@localhost:5432/dingo',
+  });
+  // An idle client losing its connection must not crash the process; the pool
+  // discards it and opens a new one on demand.
+  pool.on('error', (err) => console.log('Postgres idle client error:', err.message));
+  await pool.query('SELECT 1');
 }
 
-function beginTransaction() {
-  return db.query(`BEGIN TRANSACTION`);
+function close() {
+  return pool.end();
 }
 
-function endTransaction() {
-  return db.query(`END TRANSACTION`);
+// Runs fn on a dedicated client inside BEGIN/COMMIT. Any error rolls the
+// transaction back and is rethrown, so a failure never leaves a connection
+// stuck in an aborted transaction.
+async function transaction(fn) {
+  if (transactionClient.getStore()) {
+    throw new Error('Nested database transactions are not supported');
+  }
+  const client = await pool.connect();
+  let result;
+  try {
+    await client.query('BEGIN');
+    result = await transactionClient.run(client, fn);
+    await client.query('COMMIT');
+  } catch (err) {
+    let releaseError;
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      // The connection itself is broken; destroy it instead of reusing it.
+      releaseError = rollbackErr;
+    }
+    client.release(releaseError);
+    throw err;
+  }
+  client.release();
+  return result;
 }
 
 function addAsset(asset) {
@@ -157,6 +194,14 @@ async function getLastTransaction(address) {
     return null;
   }
   return results.rows[0];
+}
+
+async function hasTransaction(txid) {
+  debug('hasTransaction');
+
+  return (
+    await db.query(`SELECT 1 FROM transactions WHERE txid=$1 LIMIT 1`, [txid])
+  ).rows.length > 0;
 }
 
 function addTransaction(tx) {

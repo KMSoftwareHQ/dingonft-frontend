@@ -39,12 +39,29 @@ const getIndexFile = async () => {
   }
 };
 
+const HTML_ESCAPES = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+
+// Titles, descriptions, and route params are user-controlled. Escape them for
+// the HTML attribute/text contexts in index.html, and use replacer functions so
+// `$&`-style patterns in the values are not expanded by String.replace.
 const makeHtml = async (title, url, description, image) => {
-  return (await getIndexFile())
-    .replace(/%%_OG_TITLE_%%/g, title) 
-    .replace(/%%_OG_URL_%%/g, url) 
-    .replace(/%%_OG_DESCRIPTION_%%/g, description) 
-    .replace(/%%_OG_IMAGE_%%/g, image);
+  const values = {
+    TITLE: escapeHtml(title),
+    URL: escapeHtml(url),
+    DESCRIPTION: escapeHtml(description),
+    IMAGE: escapeHtml(image),
+  };
+  return (await getIndexFile()).replace(
+    /%%_OG_(TITLE|URL|DESCRIPTION|IMAGE)_%%/g,
+    (_match, key) => values[key]
+  );
 };
 
 const proxyFrontend = async (req, res) => {
