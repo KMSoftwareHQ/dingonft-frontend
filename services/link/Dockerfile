@@ -7,7 +7,7 @@ RUN npm install --global npm@12.2.0
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
-COPY app.js config.js storage.js utils.js api.js ./
+COPY app.js config.js storage.js utils.js api.js allowlist.js cloudflare-ranges.js ./
 USER node
 EXPOSE 8080
 ENV PORT=8080

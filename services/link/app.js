@@ -14,8 +14,10 @@ const {
   BASE_PATH,
   FRONTEND_URL,
   API_PROXY_URL,
+  ALLOWED_IPS,
   FETCH_TIMEOUT_MS,
 } = require("./config");
+const { createAllowlist } = require("./allowlist");
 
 const INDEX_PATH = path.join(BUILD_DIR, 'index.html');
 const ERROR_FILE = 'Error: unknown path or asset';
@@ -125,6 +127,10 @@ function asyncHandler(fn) {
   const app = express();
   app.use(cors());
   app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
+  const allowlist = createAllowlist(ALLOWED_IPS);
+  if (allowlist) {
+    app.use(allowlist);
+  }
   const router = express.Router();
   if (API_PROXY_URL) {
     router.use('/api', asyncHandler(proxyApi));

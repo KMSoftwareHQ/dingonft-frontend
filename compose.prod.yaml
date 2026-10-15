@@ -39,6 +39,8 @@ services:
       API_PROXY_URL: http://provider:80
       STORAGE_BASE: ${STORAGE_PUBLIC_BASE:-https://nyc3.digitaloceanspaces.com}
       STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
+      # Pre-launch lockdown: only these IPs/CIDRs get through (empty = public).
+      ALLOWED_IPS: ${ALLOWED_IPS:-}
     depends_on:
       frontend:
         condition: service_healthy
