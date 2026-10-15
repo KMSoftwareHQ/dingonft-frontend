@@ -36,6 +36,22 @@ pull requests and pushes to `master`. Keep it in sync with the root commands.
 
 ## Git and releases
 
+**This repository is PUBLIC.** Everything pushed or posted to GitHub (code,
+commit messages, PR descriptions, comments, reviews) is world-readable,
+emailed to watchers, and kept in edit history even after you change it.
+
+- Never publish infrastructure details: server or origin IP addresses,
+  hostnames of non-public machines, SSH users, ports, paths on servers,
+  firewall or allowlist contents, or anything from an `.env` file. The
+  production origin is behind Cloudflare and its IP must stay secret. Refer to
+  machines generically ("the production host").
+- Before every push, `gh pr create`, `gh pr edit`, or comment, grep the
+  outgoing text and diff for IPv4/IPv6 addresses, hostnames, and key-like
+  strings, and remove them. If in doubt, leave it out and tell the user
+  privately instead.
+- PR descriptions describe code changes and how they were tested, not
+  deployment state, server inventory, or operational details.
+
 Push feature branches only to the `KMSoftwareHQ` fork and open pull requests
 against `dingocoin/dingonft`. Never push directly to the Dingocoin repository or
 to a protected branch. Changes spanning an API contract must update the
