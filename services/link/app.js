@@ -13,6 +13,7 @@ const {
   isDev,
   BASE_PATH,
   FRONTEND_URL,
+  API_PROXY_URL,
   FETCH_TIMEOUT_MS,
 } = require("./config");
 
@@ -64,8 +65,14 @@ const makeHtml = async (title, url, description, image) => {
   );
 };
 
-const proxyFrontend = async (req, res) => {
-  const target = new URL(req.originalUrl, `${FRONTEND_URL}/`);
+const proxyFrontend = (req, res) =>
+  proxyRequest(new URL(req.originalUrl, `${FRONTEND_URL}/`), req, res);
+
+// Same-origin API: <BASE_PATH>/api/<route> -> <API_PROXY_URL>/<route>.
+const proxyApi = (req, res) =>
+  proxyRequest(new URL(req.url.replace(/^\/+/, ''), `${API_PROXY_URL}/`), req, res);
+
+const proxyRequest = async (target, req, res) => {
   const headers = { ...req.headers, host: target.host };
   const options = {
     method: req.method,
@@ -107,7 +114,9 @@ function asyncHandler(fn) {
       console.log(`>>>>> ERROR START [${new Date().toUTCString()}] >>>>>\n`);
       console.log(err);
       console.log("<<<<<< ERROR END <<<<<<\n");
-      res.status(500).json(err.stack);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Internal server error" });
+      }
     }
   };
 }
@@ -117,6 +126,9 @@ function asyncHandler(fn) {
   app.use(cors());
   app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
   const router = express.Router();
+  if (API_PROXY_URL) {
+    router.use('/api', asyncHandler(proxyApi));
+  }
 
   router.get('/', asyncHandler(async (_req, res) => {
     res.send(await makeHtml('Dingocoin NFT Platform', `${ROOT_PATH}/`, "Create and trade NFTs on Dingocoin's blockchain", LOGO));

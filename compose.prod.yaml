@@ -1,0 +1,121 @@
+# Production stack for https://nft.dingocoin.com.
+#
+# Cloudflare (SSL mode Flexible) -> :80 link -> frontend (static) / provider (/api)
+# Object storage is DigitalOcean Spaces; nothing but link is published.
+#
+#   cp .env.prod.example .env.prod   # fill in secrets, chmod 600
+#   docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+name: dingonft-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  frontend:
+    build:
+      context: ./apps/frontend
+      args:
+        VITE_API_URL: /api
+        VITE_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}-
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  link:
+    build: ./services/link
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      ROOT_PATH: ${PUBLIC_URL:-https://nft.dingocoin.com}
+      LOGO: ${PUBLIC_URL:-https://nft.dingocoin.com}/dingocoin.png
+      FRONTEND_URL: http://frontend:8080
+      API_PROXY_URL: http://provider:80
+      STORAGE_BASE: ${STORAGE_PUBLIC_BASE:-https://nyc3.digitaloceanspaces.com}
+      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:8080"
+
+  provider:
+    build:
+      context: ./services/provider
+      dockerfile: docker/app/Dockerfile
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      dingocoind:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      REQUIRE_SECRETS: "1"
+      ADDRESSING_SECRET: ${ADDRESSING_SECRET:-}
+      PLATFORM_PRIVATE_KEY: ${PLATFORM_PRIVATE_KEY:-}
+      DATABASE_URL: postgres://dingo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/dingo
+      DINGO_RPC_HOST: dingocoind
+      DINGO_RPC_PORT: "34646"
+      DINGO_COOKIE_PATH: /rpc/.cookie
+      S3_ENDPOINT: ${S3_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_FORCE_PATH_STYLE: "false"
+      STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
+    tmpfs:
+      - /settings:uid=1000,gid=1000,mode=0700
+    volumes:
+      - dingo-rpc:/rpc:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:80/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  dingocoind:
+    build: ./services/provider/docker/dingocoind
+    restart: unless-stopped
+    stop_grace_period: 5m
+    logging: *logging
+    command: ["dingocoind", "-printtoconsole", "-txindex=1", "-server=1",
+              "-rpcbind=0.0.0.0", "-rpcallowip=0.0.0.0/0", "-rpcport=34646",
+              "-rpccookiefile=/rpc/.cookie", "-dbcache=512"]
+    volumes:
+      - dingo-data:/home/dingo/.dingocoin
+      - dingo-rpc:/rpc
+    healthcheck:
+      test: ["CMD", "dingocoin-cli", "-rpcport=34646", "-rpccookiefile=/rpc/.cookie", "getblockchaininfo"]
+      interval: 15s
+      timeout: 10s
+      start_period: 10m
+      retries: 40
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    stop_grace_period: 1m
+    logging: *logging
+    environment:
+      POSTGRES_USER: dingo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: dingo
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./services/provider/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dingo", "-d", "dingo"]
+      interval: 5s
+      retries: 20
+
+volumes:
+  dingo-data:
+  dingo-rpc:
+  pg-data:

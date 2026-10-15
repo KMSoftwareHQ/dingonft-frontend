@@ -32,6 +32,9 @@ const config = {
   // In the monorepo the frontend is independently deployed. The edge fetches
   // its index template and proxies assets/API requests to this origin.
   FRONTEND_URL: process.env.FRONTEND_URL || "",
+  // When set, <BASE_PATH>/api/* is proxied to the provider so the browser can
+  // use a same-origin API (production sets VITE_API_URL=/api).
+  API_PROXY_URL: (process.env.API_PROXY_URL || "").replace(/\/+$/, ""),
   // Object storage base; bucket names are appended in storage.js. Dev defaults
   // to local MinIO when running the root Compose stack.
   STORAGE_BASE:

@@ -404,6 +404,7 @@ const isWebp = (buffer) => {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "15mb" }));
+  app.get("/healthz", (_req, res) => res.json({ status: "ok", height }));
 
   app.post(
     "/nft/getListTransaction",
@@ -1351,7 +1352,7 @@ const isWebp = (buffer) => {
     })
   );
 
-  app.listen(80, () => {
+  app.listen(Number(process.env.PORT) || 80, () => {
     console.log("Started");
   });
 })();
