@@ -17,6 +17,8 @@ const S3_CONFIG = {
   },
   forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 };
+// Everything except content is read directly by browsers and link, and
+// DigitalOcean Spaces objects are private unless uploaded public-read.
 // Same variable and default as services/link: production buckets are
 // dingo-nftc-0-{meta,preview,content,state,profile,collection}.
 const BUCKET_PREFIX = process.env.STORAGE_BUCKET_PREFIX || "dingo-nftc-0";
@@ -39,6 +41,7 @@ const uploadMeta = (address, meta) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: META_BUCKET,
+      ACL: "public-read",
       Key: address,
       Body: JSON.stringify(meta),
       ContentType: "application/json"
@@ -50,6 +53,7 @@ const uploadPreview = (address, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: PREVIEW_BUCKET,
+      ACL: "public-read",
       Key: address + ".png",
       Body: data,
       ContentType: "image/png"
@@ -95,6 +99,7 @@ const uploadState = async (address, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: STATE_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: address,
       Body: JSON.stringify(data),
@@ -107,6 +112,7 @@ const uploadProfile = (owner, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: PROFILE_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: owner,
       Body: JSON.stringify(data),
@@ -119,6 +125,7 @@ const uploadCollection = (handle, data) => {
   return s3.send(
     new PutObjectCommand({
       Bucket: COLLECTION_BUCKET,
+      ACL: "public-read",
       CacheControl: "max-age=0",
       Key: handle,
       Body: JSON.stringify(data),
