@@ -37,7 +37,7 @@ export default function Maintenance() {
           <Container>
             <Row>
               <span>
-                <b>© The Dingocoin Project 2021 - 2022<br /></b>
+                <b>© The Dingocoin Project 2021 - {new Date().getFullYear()}<br /></b>
               </span>
             </Row>  
           </Container>
