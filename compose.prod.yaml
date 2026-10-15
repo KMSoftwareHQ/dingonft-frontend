@@ -72,6 +72,9 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
       S3_FORCE_PATH_STYLE: "false"
       STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
+      STORAGE_PUBLIC_BASE: ${STORAGE_PUBLIC_BASE:-https://nyc3.digitaloceanspaces.com}
+      PUBLIC_URL: ${PUBLIC_URL:-https://nft.dingocoin.com}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
     tmpfs:
       - /settings:uid=1000,gid=1000,mode=0700
     volumes:

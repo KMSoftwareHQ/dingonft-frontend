@@ -22,4 +22,5 @@ the `dingo-nftc-0-*` buckets (`STORAGE_BUCKET_PREFIX`, same as production), and 
 - Database writes that must be atomic go through `database.transaction(async () => ...)`. Queries made inside the callback run on the transaction's client; an error rolls back and is rethrown. Don't issue raw `BEGIN`/`COMMIT`.
 - The live sync resumes at the last block that recorded a transaction, skips transactions it already recorded, and retries after errors such as RPC timeouts or a Postgres restart.
 - `npm test` runs offline: the database tests replace `pg` with an in-memory fake.
+- Set `DISCORD_WEBHOOK_URL` to post confirmed listings, price updates, and sales to Discord. Only events within 30 blocks of the tip are announced, so catch-up and reindexing stay quiet. Mentions are disabled.
 - Presigned content URLs from `/nft/getContent` point at `http://minio:9000`, which is only resolvable inside the compose network.
