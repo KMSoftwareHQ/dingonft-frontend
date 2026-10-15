@@ -28,37 +28,44 @@ const CONTENT_BUCKET = `${BUCKET_PREFIX}-content`;
 const STATE_BUCKET = `${BUCKET_PREFIX}-state`;
 const PROFILE_BUCKET = `${BUCKET_PREFIX}-profile`;
 const COLLECTION_BUCKET = `${BUCKET_PREFIX}-collection`;
+// Buckets whose objects must all be publicly readable (scripts/repair-acl.js checks these).
+const PUBLIC_BUCKETS = [
+  META_BUCKET,
+  PREVIEW_BUCKET,
+  STATE_BUCKET,
+  PROFILE_BUCKET,
+  COLLECTION_BUCKET,
+];
 const CONTENT_AUTHORIZATION_TIMEOUT = 30; // In seconds.
 
 let s3 = null;
 
-const createClient = () => {
-  s3 = new S3Client(S3_CONFIG);
+// Tests pass a stub client.
+const createClient = (client = new S3Client(S3_CONFIG)) => {
+  s3 = client;
 };
 
-
-const uploadMeta = (address, meta) => {
+// Every upload to a public bucket goes through here, so none can omit the
+// ACL: overwriting an object without it makes the object private again.
+const putPublic = (bucket, key, body, contentType, extra = {}) => {
   return s3.send(
     new PutObjectCommand({
-      Bucket: META_BUCKET,
+      ...extra,
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
       ACL: "public-read",
-      Key: address,
-      Body: JSON.stringify(meta),
-      ContentType: "application/json"
     })
   );
+};
+
+const uploadMeta = (address, meta) => {
+  return putPublic(META_BUCKET, address, JSON.stringify(meta), "application/json");
 };
 
 const uploadPreview = (address, data) => {
-  return s3.send(
-    new PutObjectCommand({
-      Bucket: PREVIEW_BUCKET,
-      ACL: "public-read",
-      Key: address + ".png",
-      Body: data,
-      ContentType: "image/png"
-    })
-  );
+  return putPublic(PREVIEW_BUCKET, address + ".png", data, "image/png");
 };
 
 const uploadContent = async (address, data) => {
@@ -95,46 +102,21 @@ const authorizeContent = (address) => {
   );
 };
 
-const uploadState = async (address, data) => {
-  return s3.send(
-    new PutObjectCommand({
-      Bucket: STATE_BUCKET,
-      ACL: "public-read",
-      CacheControl: "max-age=0",
-      Key: address,
-      Body: JSON.stringify(data),
-      ContentType: "application/json"
-    })
-  );
+const uploadState = (address, data) => {
+  return putPublic(STATE_BUCKET, address, JSON.stringify(data), "application/json", { CacheControl: "max-age=0" });
 };
 
 const uploadProfile = (owner, data) => {
-  return s3.send(
-    new PutObjectCommand({
-      Bucket: PROFILE_BUCKET,
-      ACL: "public-read",
-      CacheControl: "max-age=0",
-      Key: owner,
-      Body: JSON.stringify(data),
-      ContentType: "application/json"
-    })
-  );
+  return putPublic(PROFILE_BUCKET, owner, JSON.stringify(data), "application/json", { CacheControl: "max-age=0" });
 };
 
 const uploadCollection = (handle, data) => {
-  return s3.send(
-    new PutObjectCommand({
-      Bucket: COLLECTION_BUCKET,
-      ACL: "public-read",
-      CacheControl: "max-age=0",
-      Key: handle,
-      Body: JSON.stringify(data),
-      ContentType: "application/json"
-    })
-  );
+  return putPublic(COLLECTION_BUCKET, handle, JSON.stringify(data), "application/json", { CacheControl: "max-age=0" });
 };
 
 module.exports = {
+  S3_CONFIG,
+  PUBLIC_BUCKETS,
   createClient,
   uploadMeta,
   uploadPreview,
