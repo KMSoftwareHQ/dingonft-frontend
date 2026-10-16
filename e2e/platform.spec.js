@@ -66,7 +66,35 @@ test("unknown metadata routes fail without serving misleading previews", async (
 }) => {
   const response = await request.get("nft/does-not-exist");
   expect(response.status()).toBe(404);
-  expect(await response.text()).toBe("Error: unknown path or asset");
+  const html = await response.text();
+  expect(html).toContain("Page not found");
+  expect(html).not.toContain("%%_");
+});
+
+test("paths that aren't app routes get the 404 page", async ({ page, request }) => {
+  for (const path of ["v2/", "v2/nft/abc", "no/such/page", "collection/does-not-exist"]) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(404);
+    expect(response.headers()["content-type"]).toContain("text/html");
+    expect(await response.text()).toContain("Page not found");
+  }
+
+  const response = await page.goto("v2/");
+  expect(response.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go home" })).toHaveAttribute("href", "/testing-nft-platform/");
+});
+
+test("the 404 page escapes the requested path", async ({ request }) => {
+  const response = await request.get('v2/"><img src=x onerror=alert(1)>');
+  expect(response.status()).toBe(404);
+  const html = await response.text();
+  expect(html).not.toContain("<img src=x");
+});
+
+test("files are still proxied to the frontend", async ({ request }) => {
+  const response = await request.get("favicon.ico");
+  expect(response.status()).toBe(200);
 });
 
 test("Open Graph values from stored metadata are HTML-escaped", async ({

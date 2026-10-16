@@ -20,7 +20,7 @@ const {
 const { createAllowlist } = require("./allowlist");
 
 const INDEX_PATH = path.join(BUILD_DIR, 'index.html');
-const ERROR_FILE = 'Error: unknown path or asset';
+const NOT_FOUND_PAGE = fs.readFileSync(path.join(__dirname, 'not-found.html'), 'utf8');
 
 const getIndexFile = async () => {
   if (!FRONTEND_URL) {
@@ -66,6 +66,25 @@ const makeHtml = async (title, url, description, image) => {
     (_match, key) => values[key]
   );
 };
+
+// 404 page for paths that aren't app routes, and for NFTs and collections that
+// don't exist. Without it, unknown paths got the SPA shell with HTTP 200 and
+// unfilled Open Graph placeholders.
+const sendNotFound = (req, res) => {
+  const values = { PATH: escapeHtml(req.originalUrl.split('?')[0]), HOME: escapeHtml(`${BASE_PATH}/`) };
+  res
+    .status(404)
+    .set('Cache-Control', 'no-store')
+    .type('html')
+    .send(NOT_FOUND_PAGE.replace(/%%_(PATH|HOME)_%%/g, (_match, key) => values[key]));
+};
+
+// Requests the frontend container answers itself: files (build assets and
+// public files all have an extension, app routes never do), the same-origin
+// storage proxy of the dev and e2e frontends (object keys have no extension),
+// and the Vite dev server's module and HMR paths.
+const isFrontendPath = (urlPath) =>
+  /\.[A-Za-z0-9]+$/.test(urlPath) || /^\/(storage\/|@|__vite|node_modules\/|src\/)/.test(urlPath);
 
 const proxyFrontend = (req, res) =>
   proxyRequest(new URL(req.originalUrl, `${FRONTEND_URL}/`), req, res);
@@ -167,7 +186,7 @@ function asyncHandler(fn) {
 
     const meta = await getMeta(nftAddress);
     if (meta === null) {
-      return res.status(404).send(ERROR_FILE);
+      return sendNotFound(req, res);
     }
 
     res.send(await makeHtml(meta.name || nftAddress, `${ROOT_PATH}/nft/${nftAddress}`, `${meta.description || nftAddress} | Dingocoin NFT Platform`, getPreviewLink(nftAddress)));
@@ -178,7 +197,7 @@ function asyncHandler(fn) {
 
     const collection = await getCollection(collectionHandle);
     if (collection === null) {
-      return res.status(404).send(ERROR_FILE);
+      return sendNotFound(req, res);
     }
 
     res.send(await makeHtml(collection.name || collection.handle, `${ROOT_PATH}/collection/${collectionHandle}`, `${collection.description || collectionHandle} | Dingocoin NFT Platform`, getPreviewLink(collection.thumbnail)));
@@ -194,6 +213,11 @@ function asyncHandler(fn) {
 
     res.send(await makeHtml(profile.name || profileAddress, `${ROOT_PATH}/profile/${profileAddress}`, `${profile.name || profileAddress} | Dingocoin NFT Platform`, (profile.thumbnail === undefined || profile.thumbnail === null) ? "" : getPreviewLink(profile.thumbnail)));
   }));
+
+  // Everything below serves files; any other page path is a 404.
+  router.use((req, res, next) =>
+    ['GET', 'HEAD'].includes(req.method) && !isFrontendPath(req.path) ? sendNotFound(req, res) : next()
+  );
 
   if (FRONTEND_URL) {
     router.use(asyncHandler(proxyFrontend));
