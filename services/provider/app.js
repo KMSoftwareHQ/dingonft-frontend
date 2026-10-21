@@ -426,7 +426,10 @@ const isWebp = (buffer) => {
 
   const app = express();
   app.use(cors());
-  app.use(express.json({ limit: "15mb" }));
+  // inflate: false rejects compressed request bodies (415). No client sends
+  // them, and it keeps untrusted input away from the zlib/Brotli decoders
+  // (CVE-2026-111497 was a Brotli decoder RCE).
+  app.use(express.json({ limit: "15mb", inflate: false }));
   app.get("/healthz", (_req, res) => res.json({ status: "ok", height }));
 
   app.post(
