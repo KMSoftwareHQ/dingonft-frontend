@@ -1378,6 +1378,18 @@ const isWebp = (buffer) => {
     })
   );
 
+  // Errors raised before a route runs (malformed JSON, oversized or
+  // compressed bodies) get a short JSON reply instead of Express's default
+  // page, which includes the stack trace outside NODE_ENV=production.
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, _req, res, _next) => {
+    const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
+    if (status === 500) {
+      console.log(err);
+    }
+    res.status(status).json({ error: status === 500 ? "Internal server error" : "Bad request" });
+  });
+
   app.listen(Number(process.env.PORT) || 80, () => {
     console.log("Started");
   });

@@ -7,5 +7,6 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY . .
 RUN mkdir -p /settings && chown node:node /settings
+ENV NODE_ENV=production
 USER node
 ENTRYPOINT ["sh", "docker/app/entrypoint.sh"]
