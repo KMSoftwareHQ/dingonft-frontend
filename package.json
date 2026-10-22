@@ -9,9 +9,9 @@
   "scripts": {
     "dev": "docker compose up --build",
     "dev:down": "docker compose down",
-    "test": "npm --prefix apps/frontend test && npm --prefix services/provider test",
-    "lint": "npm --prefix apps/frontend run lint",
-    "build": "npm --prefix apps/frontend run build",
+    "test": "npm --prefix apps/frontend test && npm --prefix apps/frontend-v2 test && npm --prefix services/provider test",
+    "lint": "npm --prefix apps/frontend run lint && npm --prefix apps/frontend-v2 run lint",
+    "build": "npm --prefix apps/frontend run build && npm --prefix apps/frontend-v2 run build",
     "test:e2e": "sh scripts/e2e.sh"
   }
 }

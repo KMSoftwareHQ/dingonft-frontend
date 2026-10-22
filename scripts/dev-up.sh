@@ -14,8 +14,11 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="${LOG_DIR:-${TMPDIR:-/tmp}/dingonft-dev}"
 [[ -f "$REPO/.env" ]] && set -a && . "$REPO/.env" && set +a
-BASE="http://127.0.0.1:${FRONTEND_PORT:-3020}${BASE_PATH:-/testing-nft-platform}"
-SERVICES=(frontend link provider dingocoind postgres minio)
+# DEV_SITE_URL/DEV_V2_URL override where the dev servers are checked (e.g. when
+# a machine-local compose.override.yaml puts them behind a reverse proxy).
+BASE="${DEV_SITE_URL:-http://127.0.0.1:${FRONTEND_PORT:-3020}${BASE_PATH:-/testing-nft-platform}}"
+V2_BASE="${DEV_V2_URL:-http://127.0.0.1:${V2_PORT:-3022}${V2_BASE_PATH:-/testing-nft-platform/v2}}"
+SERVICES=(frontend link provider dingocoind postgres minio frontend-v2 frontend-v2-mock)
 START=1
 [[ "${1:-}" == "--status" ]] && START=0
 
@@ -40,6 +43,8 @@ done
 if (( ${#down[@]} == 0 )); then
   code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "$BASE/" || true)
   echo "  site: $BASE/ -> HTTP ${code:-timeout}"
+  code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "$V2_BASE/" || true)
+  echo "  v2:   $V2_BASE/ -> HTTP ${code:-timeout}"
 elif in_flight; then
   echo "  start already in progress (log: $LOG_DIR/compose.log)"
 elif (( START )); then
@@ -51,5 +56,5 @@ else
   echo "  down: ${down[*]} (start with scripts/dev-up.sh or docker compose up -d --build)"
 fi
 
-echo "  edge: https://ccnodes.net${BASE_PATH:-/testing-nft-platform}/ (operator IP only)"
+[[ -n "${DEV_EDGE_URL:-}" ]] && echo "  edge: $DEV_EDGE_URL"
 exit 0

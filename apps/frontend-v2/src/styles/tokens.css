@@ -1,0 +1,117 @@
+/* Design tokens. Brand: Dingocoin teal #1e4151, cream #f2ede0, gold #cb9e1e. */
+:root {
+  color-scheme: light;
+  --bg: #f7f4ec;
+  --bg-elevated: #fbf9f4;
+  --surface: #ffffff;
+  --surface-2: #f1ede2;
+  --surface-3: #e8e2d4;
+  --border: #e4ddcd;
+  --border-strong: #cdc4af;
+  --text: #13232a;
+  --text-2: #49585e;
+  --text-3: #6f7b7f;
+  --primary: #1e4151;
+  --primary-hover: #15323f;
+  --on-primary: #ffffff;
+  --accent: #cb9e1e;
+  --accent-ink: #8a6410;
+  --accent-soft: #f6ead0;
+  --success: #1d7a4c;
+  --success-soft: #e3f3ea;
+  --danger: #b42318;
+  --danger-soft: #fbe8e6;
+  --info-soft: #e5eef1;
+  --focus: #2f7d9d;
+  --skeleton: #ebe5d8;
+  --skeleton-shine: #f5f1e8;
+  --overlay: rgb(15 21 23 / 0.55);
+  --shadow-sm: 0 1px 2px rgb(19 35 42 / 0.06), 0 1px 1px rgb(19 35 42 / 0.04);
+  --shadow-md: 0 6px 20px -6px rgb(19 35 42 / 0.16), 0 2px 6px rgb(19 35 42 / 0.05);
+  --shadow-lg: 0 24px 60px -16px rgb(19 35 42 / 0.32);
+
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk Variable", "Space Grotesk", var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --gutter: 16px;
+  --header-h: 64px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (min-width: 720px) {
+  :root {
+    --gutter: 28px;
+  }
+}
+
+/* Dark: the saved choice wins, otherwise follow the system. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1416;
+  --bg-elevated: #121a1d;
+  --surface: #151e21;
+  --surface-2: #1b2629;
+  --surface-3: #233034;
+  --border: #243135;
+  --border-strong: #354549;
+  --text: #edebe3;
+  --text-2: #aab4b5;
+  --text-3: #808c8e;
+  --primary: #e2b23e;
+  --primary-hover: #efc35a;
+  --on-primary: #191307;
+  --accent: #e2b23e;
+  --accent-ink: #e8bd55;
+  --accent-soft: #2c2614;
+  --success: #4cc38a;
+  --success-soft: #12291f;
+  --danger: #f2716a;
+  --danger-soft: #331716;
+  --info-soft: #172529;
+  --focus: #7cc4e0;
+  --skeleton: #1c2629;
+  --skeleton-shine: #243034;
+  --overlay: rgb(0 0 0 / 0.7);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 28px 70px -18px rgb(0 0 0 / 0.75);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1416;
+    --bg-elevated: #121a1d;
+    --surface: #151e21;
+    --surface-2: #1b2629;
+    --surface-3: #233034;
+    --border: #243135;
+    --border-strong: #354549;
+    --text: #edebe3;
+    --text-2: #aab4b5;
+    --text-3: #808c8e;
+    --primary: #e2b23e;
+    --primary-hover: #efc35a;
+    --on-primary: #191307;
+    --accent: #e2b23e;
+    --accent-ink: #e8bd55;
+    --accent-soft: #2c2614;
+    --success: #4cc38a;
+    --success-soft: #12291f;
+    --danger: #f2716a;
+    --danger-soft: #331716;
+    --info-soft: #172529;
+    --focus: #7cc4e0;
+    --skeleton: #1c2629;
+    --skeleton-shine: #243034;
+    --overlay: rgb(0 0 0 / 0.7);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 28px 70px -18px rgb(0 0 0 / 0.75);
+  }
+}
