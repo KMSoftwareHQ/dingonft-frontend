@@ -1,6 +1,7 @@
 # Production stack for https://nft.dingocoin.com.
 #
-# Cloudflare (SSL mode Flexible) -> :80 link -> frontend (static) / provider (/api)
+# Cloudflare (SSL mode Flexible) -> :80 link -> frontend (static), frontend-v2
+# (static, /v2/), provider (/api)
 # Object storage is DigitalOcean Spaces; nothing but link is published.
 #
 #   cp .env.prod.example .env.prod   # fill in secrets, chmod 600
@@ -28,6 +29,22 @@ services:
       timeout: 3s
       retries: 5
 
+  # The redesigned frontend at /v2/, beside the current one.
+  frontend-v2:
+    build:
+      context: ./apps/frontend-v2
+      args:
+        BASE_PATH: /v2/
+        VITE_API_URL: /api
+        VITE_STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}-
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/v2/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   link:
     build: ./services/link
     restart: unless-stopped
@@ -36,13 +53,18 @@ services:
       ROOT_PATH: ${PUBLIC_URL:-https://nft.dingocoin.com}
       LOGO: ${PUBLIC_URL:-https://nft.dingocoin.com}/dingocoin.png
       FRONTEND_URL: http://frontend:8080
+      FRONTEND_V2_URL: http://frontend-v2:8080
       API_PROXY_URL: http://provider:80
       STORAGE_BASE: ${STORAGE_PUBLIC_BASE:-https://nyc3.digitaloceanspaces.com}
       STORAGE_BUCKET_PREFIX: ${STORAGE_BUCKET_PREFIX:-dingo-nftc-0}
       # Pre-launch lockdown: only these IPs/CIDRs get through (empty = public).
       ALLOWED_IPS: ${ALLOWED_IPS:-}
+      # Same, for /v2/ only (empty = /v2/ is public).
+      V2_ALLOWED_IPS: ${V2_ALLOWED_IPS:-}
     depends_on:
       frontend:
+        condition: service_healthy
+      frontend-v2:
         condition: service_healthy
     ports:
       - "80:8080"

@@ -13,8 +13,10 @@ const {
   isDev,
   BASE_PATH,
   FRONTEND_URL,
+  FRONTEND_V2_URL,
   API_PROXY_URL,
   ALLOWED_IPS,
+  V2_ALLOWED_IPS,
   FETCH_TIMEOUT_MS,
 } = require("./config");
 const { createAllowlist } = require("./allowlist");
@@ -22,15 +24,17 @@ const { createAllowlist } = require("./allowlist");
 const INDEX_PATH = path.join(BUILD_DIR, 'index.html');
 const NOT_FOUND_PAGE = fs.readFileSync(path.join(__dirname, 'not-found.html'), 'utf8');
 
-const getIndexFile = async () => {
-  if (!FRONTEND_URL) {
+// `site` is { frontendUrl, prefix, image }: the main frontend (prefix "") or v2
+// ("/v2"); `image` is the Open Graph image of pages without their own.
+const getIndexFile = async (site) => {
+  if (!site.frontendUrl) {
     return fs.readFileSync(INDEX_PATH, "utf8");
   }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(`${FRONTEND_URL}${BASE_PATH}/`, {
+    const response = await fetch(`${site.frontendUrl}${BASE_PATH}${site.prefix}/`, {
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -54,14 +58,14 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => HTML_ESCA
 // Titles, descriptions, and route params are user-controlled. Escape them for
 // the HTML attribute/text contexts in index.html, and use replacer functions so
 // `$&`-style patterns in the values are not expanded by String.replace.
-const makeHtml = async (title, url, description, image) => {
+const makeHtml = async (site, title, url, description, image) => {
   const values = {
     TITLE: escapeHtml(title),
     URL: escapeHtml(url),
     DESCRIPTION: escapeHtml(description),
     IMAGE: escapeHtml(image),
   };
-  return (await getIndexFile()).replace(
+  return (await getIndexFile(site)).replace(
     /%%_OG_(TITLE|URL|DESCRIPTION|IMAGE)_%%/g,
     (_match, key) => values[key]
   );
@@ -70,8 +74,8 @@ const makeHtml = async (title, url, description, image) => {
 // 404 page for paths that aren't app routes, and for NFTs and collections that
 // don't exist. Without it, unknown paths got the SPA shell with HTTP 200 and
 // unfilled Open Graph placeholders.
-const sendNotFound = (req, res) => {
-  const values = { PATH: escapeHtml(req.originalUrl.split('?')[0]), HOME: escapeHtml(`${BASE_PATH}/`) };
+const sendNotFound = (site, req, res) => {
+  const values = { PATH: escapeHtml(req.originalUrl.split('?')[0]), HOME: escapeHtml(`${BASE_PATH}${site.prefix}/`) };
   res
     .status(404)
     .set('Cache-Control', 'no-store')
@@ -86,8 +90,8 @@ const sendNotFound = (req, res) => {
 const isFrontendPath = (urlPath) =>
   /\.[A-Za-z0-9]+$/.test(urlPath) || /^\/(storage\/|@|__vite|node_modules\/|src\/)/.test(urlPath);
 
-const proxyFrontend = (req, res) =>
-  proxyRequest(new URL(req.originalUrl, `${FRONTEND_URL}/`), req, res);
+const proxyFrontend = (site) => (req, res) =>
+  proxyRequest(new URL(req.originalUrl, `${site.frontendUrl}/`), req, res);
 
 // Same-origin API: <BASE_PATH>/api/<route> -> <API_PROXY_URL>/<route>.
 const proxyApi = (req, res) =>
@@ -127,6 +131,88 @@ const proxyRequest = async (target, req, res) => {
   }
 };
 
+// Page routes with Open Graph tags, the 404 page, and file proxying for one
+// frontend. Both frontends use the same app paths and the same /api.
+const createSiteRouter = (site) => {
+  const router = express.Router();
+  // v2 duplicates every page of the main site; keep it out of search results.
+  if (site.prefix) {
+    router.use((_req, res, next) => {
+      res.set('X-Robots-Tag', 'noindex');
+      next();
+    });
+  }
+
+  router.get('/', asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Dingocoin NFT Platform', `${ROOT_PATH}${site.prefix}/`, "Create and trade NFTs on Dingocoin's blockchain", site.image));
+  }));
+
+  router.get('/create', asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Create NFT', `${ROOT_PATH}${site.prefix}/create`, "Create NFT | Dingocoin NFT Platform", site.image));
+  }));
+
+  router.get(['/collections', '/collections/', '/collections/hot', '/collections/top', '/collections/search'], asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Explore collections', `${ROOT_PATH}${site.prefix}/collections`, "Explore collections | Dingocoin NFT Platform", site.image));
+  }));
+
+  router.get(['/nfts', '/nfts/search'], asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Explore NFTs', `${ROOT_PATH}${site.prefix}/nfts`, "Explore NFTs | Dingocoin NFT Platform", site.image));
+  }));
+
+  router.get(['/profiles', '/profiles/earnings', '/profiles/search'], asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Explore profiles', `${ROOT_PATH}${site.prefix}/profiles`, "Explore profiles | Dingocoin NFT Platform", site.image));
+  }));
+
+  router.get('/search', asyncHandler(async (_req, res) => {
+    res.send(await makeHtml(site, 'Search', `${ROOT_PATH}${site.prefix}/search`, "Search collections, nfts, profiles | Dingocoin NFT Platform", site.image));
+  }));
+
+  router.get('/nft/:nftAddress', asyncHandler(async (req, res) => {
+    const nftAddress = req.params.nftAddress;
+
+    const meta = await getMeta(nftAddress);
+    if (meta === null) {
+      return sendNotFound(site, req, res);
+    }
+
+    res.send(await makeHtml(site, meta.name || nftAddress, `${ROOT_PATH}${site.prefix}/nft/${nftAddress}`, `${meta.description || nftAddress} | Dingocoin NFT Platform`, getPreviewLink(nftAddress)));
+  }));
+
+  router.get('/collection/:collectionHandle', asyncHandler(async (req, res) => {
+    const collectionHandle = req.params.collectionHandle;
+
+    const collection = await getCollection(collectionHandle);
+    if (collection === null) {
+      return sendNotFound(site, req, res);
+    }
+
+    res.send(await makeHtml(site, collection.name || collection.handle, `${ROOT_PATH}${site.prefix}/collection/${collectionHandle}`, `${collection.description || collectionHandle} | Dingocoin NFT Platform`, getPreviewLink(collection.thumbnail)));
+  }));
+
+  router.get(['/profile/:profileAddress', '/profile/:profileAddress/owned', '/profile/:profileAddress/stats'], asyncHandler(async (req, res) => {
+    const profileAddress = req.params.profileAddress;
+
+    const profile = await getProfile(profileAddress);
+    if (profile === null) {
+      return res.send(await makeHtml(site, profileAddress, `${ROOT_PATH}${site.prefix}/profile/${profileAddress}`, `${profileAddress} | Dingocoin NFT Platform`, ""));
+    }
+
+    res.send(await makeHtml(site, profile.name || profileAddress, `${ROOT_PATH}${site.prefix}/profile/${profileAddress}`, `${profile.name || profileAddress} | Dingocoin NFT Platform`, (profile.thumbnail === undefined || profile.thumbnail === null) ? "" : getPreviewLink(profile.thumbnail)));
+  }));
+
+  // Everything below serves files; any other page path is a 404.
+  router.use((req, res, next) =>
+    ['GET', 'HEAD'].includes(req.method) && !isFrontendPath(req.path) ? sendNotFound(site, req, res) : next()
+  );
+
+  if (site.frontendUrl) {
+    router.use(asyncHandler(proxyFrontend(site)));
+  } else {
+    router.use(express.static(BUILD_DIR));
+  }
+  return router;
+};
+
 function asyncHandler(fn) {
   return async function (req, res) {
     try {
@@ -154,76 +240,16 @@ function asyncHandler(fn) {
   if (API_PROXY_URL) {
     router.use('/api', asyncHandler(proxyApi));
   }
-
-  router.get('/', asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Dingocoin NFT Platform', `${ROOT_PATH}/`, "Create and trade NFTs on Dingocoin's blockchain", LOGO));
-  }));
-  
-  router.get('/create', asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Create NFT', `${ROOT_PATH}/create`, "Create NFT | Dingocoin NFT Platform", LOGO));
-  }));
-  
-  router.get(['/collections', '/collections/', '/collections/hot', '/collections/top', '/collections/search'], asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Explore collections', `${ROOT_PATH}/collections`, "Explore collections | Dingocoin NFT Platform", LOGO));
-  }));
-  
-  router.get(['/nfts', '/nfts/search'], asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Explore NFTs', `${ROOT_PATH}/nfts`, "Explore NFTs | Dingocoin NFT Platform", LOGO));
-  }));
-  
-  router.get(['/profiles', '/profiles/earnings', '/profiles/search'], asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Explore profiles', `${ROOT_PATH}/profiles`, "Explore profiles | Dingocoin NFT Platform", LOGO));
-  }));
-  
-  router.get('/search', asyncHandler(async (_req, res) => {
-    res.send(await makeHtml('Search', `${ROOT_PATH}/search`, "Search collections, nfts, profiles | Dingocoin NFT Platform", LOGO));
-  }));
-
-
-  
-  router.get('/nft/:nftAddress', asyncHandler(async (req, res) => {
-    const nftAddress = req.params.nftAddress;
-
-    const meta = await getMeta(nftAddress);
-    if (meta === null) {
-      return sendNotFound(req, res);
+  // The redesigned frontend (apps/frontend-v2) at <BASE_PATH>/v2/, optionally
+  // limited to V2_ALLOWED_IPS while it's being tried on production.
+  if (FRONTEND_V2_URL) {
+    const v2Allowlist = createAllowlist(V2_ALLOWED_IPS);
+    if (v2Allowlist) {
+      router.use('/v2', v2Allowlist);
     }
-
-    res.send(await makeHtml(meta.name || nftAddress, `${ROOT_PATH}/nft/${nftAddress}`, `${meta.description || nftAddress} | Dingocoin NFT Platform`, getPreviewLink(nftAddress)));
-  }));
-  
-  router.get('/collection/:collectionHandle', asyncHandler(async (req, res) => {
-    const collectionHandle = req.params.collectionHandle;
-
-    const collection = await getCollection(collectionHandle);
-    if (collection === null) {
-      return sendNotFound(req, res);
-    }
-
-    res.send(await makeHtml(collection.name || collection.handle, `${ROOT_PATH}/collection/${collectionHandle}`, `${collection.description || collectionHandle} | Dingocoin NFT Platform`, getPreviewLink(collection.thumbnail)));
-  }));
-  
-  router.get(['/profile/:profileAddress', '/profile/:profileAddress/owned', '/profile/:profileAddress/stats'], asyncHandler(async (req, res) => {
-    const profileAddress = req.params.profileAddress;
-
-    const profile = await getProfile(profileAddress);
-    if (profile === null) {
-      return res.send(await makeHtml(profileAddress, `${ROOT_PATH}/profile/${profileAddress}`, `${profileAddress} | Dingocoin NFT Platform`, ""));
-    }
-
-    res.send(await makeHtml(profile.name || profileAddress, `${ROOT_PATH}/profile/${profileAddress}`, `${profile.name || profileAddress} | Dingocoin NFT Platform`, (profile.thumbnail === undefined || profile.thumbnail === null) ? "" : getPreviewLink(profile.thumbnail)));
-  }));
-
-  // Everything below serves files; any other page path is a 404.
-  router.use((req, res, next) =>
-    ['GET', 'HEAD'].includes(req.method) && !isFrontendPath(req.path) ? sendNotFound(req, res) : next()
-  );
-
-  if (FRONTEND_URL) {
-    router.use(asyncHandler(proxyFrontend));
-  } else {
-    router.use(express.static(BUILD_DIR));
+    router.use('/v2', createSiteRouter({ frontendUrl: FRONTEND_V2_URL, prefix: '/v2', image: `${ROOT_PATH}/v2/og-image.jpg` }));
   }
+  router.use(createSiteRouter({ frontendUrl: FRONTEND_URL, prefix: '', image: LOGO }));
   app.use(BASE_PATH || '/', router);
 
   if (!FRONTEND_URL && !fs.existsSync(INDEX_PATH)) {
