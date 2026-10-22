@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head prefix="og: http://ogp.me/ns#">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f4ec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1517" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="%BASE_URL%favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%BASE_URL%favicon-16x16.png" />
+
+    <!-- Filled in by services/link in production; shown verbatim in local dev. -->
+    <title>%%_OG_TITLE_%%</title>
+    <meta name="description" content="%%_OG_DESCRIPTION_%%" />
+    <meta property="og:title" content="%%_OG_TITLE_%%" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%%_OG_URL_%%" />
+    <meta property="og:description" content="%%_OG_DESCRIPTION_%%" />
+    <meta property="og:image" content="%%_OG_IMAGE_%%" />
+    <meta property="og:site_name" content="Dingocoin NFT Platform" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="%%_OG_URL_%%" />
+
+    <!-- Applies the saved theme before first paint, so dark mode doesn't flash. -->
+    <script>
+      try {
+        var theme = localStorage.getItem("dingonft-theme");
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

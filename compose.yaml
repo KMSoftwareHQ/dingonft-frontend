@@ -28,6 +28,59 @@ services:
       timeout: 3s
       retries: 30
 
+  # The v2 frontend (apps/frontend-v2) on fake data from its mock backend
+  # (apps/frontend-v2/mock), at http://localhost:3022/testing-nft-platform/v2/
+  # (V2_PORT, V2_BASE_PATH). Point V2_API_PROXY_TARGET/V2_STORAGE_PROXY_TARGET elsewhere
+  # (e.g. http://provider:80, http://minio:9000) to use other data.
+  frontend-v2:
+    build:
+      context: ./apps/frontend-v2
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    user: "${DEV_UID:-1001}:${DEV_GID:-1001}"
+    environment:
+      npm_config_cache: /tmp/npm-cache
+      BASE_PATH: ${V2_BASE_PATH:-/testing-nft-platform/v2}/
+      VITE_API_URL: ${V2_BASE_PATH:-/testing-nft-platform/v2}/api
+      VITE_STORAGE_BASE: ${V2_BASE_PATH:-/testing-nft-platform/v2}/storage
+      VITE_STORAGE_BUCKET_PREFIX: dingo-nftc-0-
+      DEV_API_PROXY_TARGET: ${V2_API_PROXY_TARGET:-http://frontend-v2-mock:4000/api}
+      DEV_STORAGE_PROXY_TARGET: ${V2_STORAGE_PROXY_TARGET:-http://frontend-v2-mock:4000/storage}
+      # Extra host names the dev server answers to (e.g. behind a reverse proxy).
+      DEV_ALLOWED_HOSTS: ${V2_ALLOWED_HOSTS:-}
+    volumes:
+      - ./apps/frontend-v2:/app
+      - frontend-v2-node-modules:/app/node_modules
+    ports:
+      - "127.0.0.1:${V2_PORT:-3022}:3000"
+    depends_on:
+      frontend-v2-mock:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch(new URL(process.env.BASE_PATH, 'http://localhost:3000')).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # Fake provider API + object storage for frontend-v2: a seeded world of
+  # creators, collections, NFTs with generated art, and trade history. Writes
+  # apply in memory and reset on restart.
+  frontend-v2-mock:
+    image: node:24.22.1-bookworm-slim
+    restart: unless-stopped
+    user: "${DEV_UID:-1001}:${DEV_GID:-1001}"
+    working_dir: /mock
+    command: ["node", "server.js"]
+    environment:
+      PUBLIC_STORAGE: ${V2_BASE_PATH:-/testing-nft-platform/v2}/storage
+    volumes:
+      - ./apps/frontend-v2/mock:/mock:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   link:
     build:
       context: ./services/link
@@ -159,5 +212,6 @@ volumes:
   minio-data:
   provider-settings:
   frontend-node-modules:
+  frontend-v2-node-modules:
   provider-node-modules:
   link-node-modules:

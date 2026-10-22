@@ -1,0 +1,7 @@
+# Dev image for `docker compose up`: Vite dev server with hot reload.
+FROM node:24.22.1-bookworm-slim
+WORKDIR /app
+RUN npm install --global npm@12.2.0
+RUN mkdir -p /app/node_modules && chmod 0777 /app/node_modules
+EXPOSE 3000
+CMD ["sh", "-c", "npm ci --no-audit --no-fund && npm run dev"]

@@ -4,6 +4,7 @@ This monorepo contains the three deployable parts of the Dingocoin NFT
 platform:
 
 - `apps/frontend` — React/Vite browser application
+- `apps/frontend-v2` — redesigned frontend, served under `/v2/` (see its README)
 - `services/link` — public edge server and Open Graph renderer
 - `services/provider` — API and blockchain indexer
 
@@ -18,7 +19,11 @@ The full stack runs the real provider with Postgres, MinIO, and `dingocoind`:
 docker compose up -d --build
 ```
 
-Open <http://localhost:3020/testing-nft-platform/>. `scripts/dev-up.sh --status`
+Open <http://localhost:3020/testing-nft-platform/>; the v2 frontend runs on
+fake data at <http://localhost:3022/testing-nft-platform/v2/>. Both bind
+loopback only. Machine-specific setup, such as a reverse proxy in front of the
+dev servers, goes in an untracked `compose.override.yaml` and `.env`.
+`scripts/dev-up.sh --status`
 prints the state of every service; without `--status` it also starts the stack
 in the background if anything is down. The first node sync can take
 a long time; its chain data is kept in a named volume. API, object-storage, and

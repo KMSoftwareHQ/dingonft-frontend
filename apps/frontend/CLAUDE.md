@@ -31,7 +31,7 @@ The root `scripts/dev-up.sh` reports the state of every root Compose service and
 
 - **Sub-path:** the dev app is served under `BASE_PATH=/testing-nft-platform`. Vite uses it as its base URL; it becomes the Router `basename`, prefixes assets, and every app-internal link goes through `link()` in `utils.js`. Always use `link("/...")` for new internal `href`s and `window.location.assign` calls, never a bare `"/..."`. Production builds default to `/`, so `link()` is a no-op there.
 - **Storage and API** in dev are same-origin paths (`<prefix>/storage`, `<prefix>/api`), which `vite.config.js` proxies in both dev and preview. Root Compose targets the `provider` and `minio` containers. Every environment uses the production bucket names `dingo-nftc-0-*`; root Compose derives `VITE_STORAGE_BUCKET_PREFIX` from `STORAGE_BUCKET_PREFIX`.
-- **ccnodes.net edge:** `https://ccnodes.net/testing-nft-platform/` reverse-proxies to :3020. The route lives in `~/ccnodes.net/caddy/ccnodes.net.caddy`, is locked to the operator's IP (`import private`), and is noindex. Reload with `docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile` from `~/web`. Changing `BASE_PATH` means changing that route too.
+- **Machine-local edge:** a reverse proxy in front of the dev stack is machine-specific; it's configured in untracked `compose.override.yaml`/`.env`, and notes about it go in `CLAUDE.local.md`.
 
 Linting and tests are explicit commands; Vite does not run them as part of `dev` or `build`.
 
