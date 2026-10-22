@@ -8,5 +8,6 @@ npm-debug.log*
 .env
 .claude/settings.local.json
 .env.prod
+backups/
 compose.override.yaml
 CLAUDE.local.md
