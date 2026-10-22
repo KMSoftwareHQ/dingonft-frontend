@@ -41,9 +41,11 @@ const rawGet = (port, requestTarget) =>
   });
 
 const frontendPaths = [];
+const frontendV2Paths = [];
 const apiPaths = [];
 const canaryPaths = [];
 let frontend;
+let frontendV2;
 let api;
 let canary;
 let link;
@@ -51,6 +53,7 @@ let linkPort;
 
 before(async () => {
   frontend = await startServer('frontend', frontendPaths);
+  frontendV2 = await startServer('frontend-v2', frontendV2Paths);
   api = await startServer('api', apiPaths);
   canary = await startServer('canary', canaryPaths);
   linkPort = await freePort();
@@ -60,6 +63,7 @@ before(async () => {
       NODE_ENV: 'production',
       PORT: String(linkPort),
       FRONTEND_URL: `http://127.0.0.1:${frontend.address().port}`,
+      FRONTEND_V2_URL: `http://127.0.0.1:${frontendV2.address().port}`,
       // A base path, so the test also covers requests that try to leave it.
       API_PROXY_URL: `http://127.0.0.1:${api.address().port}/v1`,
       FETCH_TIMEOUT_MS: '2000',
@@ -75,6 +79,7 @@ before(async () => {
 after(() => {
   link?.kill();
   frontend?.close();
+  frontendV2?.close();
   api?.close();
   canary?.close();
 });
@@ -82,6 +87,8 @@ after(() => {
 test('normal file and API requests still reach their upstreams unchanged', async () => {
   const fileResponse = await rawGet(linkPort, '/assets/index-abc.js?v=1');
   assert.match(fileResponse, /frontend:\/assets\/index-abc\.js\?v=1/);
+  const v2FileResponse = await rawGet(linkPort, '/v2/assets/index-def.js?v=2');
+  assert.match(v2FileResponse, /frontend-v2:\/v2\/assets\/index-def\.js\?v=2/);
   const apiResponse = await rawGet(linkPort, '/api/nft/get?address=abc');
   assert.match(apiResponse, /api:\/v1\/nft\/get\?address=abc/);
 });
@@ -92,6 +99,8 @@ test('no request path makes the edge contact another host', async () => {
     `//${canaryHost}/x.js`,
     `/\\${canaryHost}/x.js`,
     `http://${canaryHost}/x.js`,
+    `/v2//${canaryHost}/x.js`,
+    `/v2/\\${canaryHost}/x.js`,
     `/api/http://${canaryHost}/`,
     `/api//${canaryHost}/`,
     `/api/\\\\${canaryHost}/`,
@@ -99,14 +108,15 @@ test('no request path makes the edge contact another host', async () => {
     `http://${canaryHost}/api/x`,
   ];
   for (const requestTarget of attacks) {
-    const receivedBefore = frontendPaths.length + apiPaths.length;
+    const receivedBefore = frontendPaths.length + frontendV2Paths.length + apiPaths.length;
     await rawGet(linkPort, requestTarget);
     // The request was proxied, just to the intended upstream.
-    assert.equal(frontendPaths.length + apiPaths.length, receivedBefore + 1, requestTarget);
+    assert.equal(frontendPaths.length + frontendV2Paths.length + apiPaths.length, receivedBefore + 1, requestTarget);
   }
   assert.deepEqual(canaryPaths, []);
   // Each attack stayed on the intended upstream as an ordinary path.
   assert.ok(frontendPaths.some((receivedPath) => receivedPath === `/${canaryHost}/x.js`));
+  assert.ok(frontendV2Paths.some((receivedPath) => receivedPath === `/v2//${canaryHost}/x.js`));
   assert.ok(apiPaths.some((receivedPath) => receivedPath === `/v1/http://${canaryHost}/`));
 });
 

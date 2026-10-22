@@ -11,7 +11,9 @@ if (fs.existsSync(envFile)) {
 const NODE_ENV = process.env.NODE_ENV || "production";
 const isDev = NODE_ENV === "development";
 const rawBasePath = process.env.BASE_PATH || "";
-const BASE_PATH = rawBasePath === "/" ? "" : `/${rawBasePath.replace(/^\/+|\/+$/g, "")}`;
+const trimmedBasePath = rawBasePath.replace(/^\/+|\/+$/g, "");
+// "" for a root deployment, otherwise "/<path>" without a trailing slash.
+const BASE_PATH = trimmedBasePath ? `/${trimmedBasePath}` : "";
 
 const config = {
   NODE_ENV,
@@ -32,11 +34,18 @@ const config = {
   // In the monorepo the frontend is independently deployed. The edge fetches
   // its index template and proxies assets/API requests to this origin.
   FRONTEND_URL: process.env.FRONTEND_URL || "",
+  // Optional second frontend (apps/frontend-v2), served at <BASE_PATH>/v2/.
+  FRONTEND_V2_URL: process.env.FRONTEND_V2_URL || "",
   // When set, <BASE_PATH>/api/* is proxied to the provider so the browser can
   // use a same-origin API (production sets VITE_API_URL=/api).
   // Comma-separated IPs/CIDRs. When set, every route except /healthz returns
   // 403 for other clients (pre-launch lockdown). Empty disables it.
   ALLOWED_IPS: (process.env.ALLOWED_IPS || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean),
+  // Same format, applied only to <BASE_PATH>/v2/ (on top of ALLOWED_IPS).
+  V2_ALLOWED_IPS: (process.env.V2_ALLOWED_IPS || "")
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean),
