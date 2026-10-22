@@ -1,6 +1,6 @@
 # Production image: static Vite build served by nginx. The link service in
 # front of it fills the Open Graph placeholders in index.html.
-FROM node:24-bookworm-slim AS build
+FROM node:24.22.1-bookworm-slim AS build
 WORKDIR /app
 RUN npm install --global npm@12.2.0
 COPY package.json package-lock.json ./

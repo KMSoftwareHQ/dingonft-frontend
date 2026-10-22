@@ -1,5 +1,5 @@
 # Production image. Root compose.prod.yaml runs it behind Cloudflare.
-FROM node:24-bookworm-slim
+FROM node:24.22.1-bookworm-slim
 
 WORKDIR /app
 ENV NODE_ENV=production

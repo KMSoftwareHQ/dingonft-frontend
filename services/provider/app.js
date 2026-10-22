@@ -426,7 +426,10 @@ const isWebp = (buffer) => {
 
   const app = express();
   app.use(cors());
-  app.use(express.json({ limit: "15mb" }));
+  // inflate: false rejects compressed request bodies (415). No client sends
+  // them, and it keeps untrusted input away from the zlib/Brotli decoders
+  // (CVE-2026-111497 was a Brotli decoder RCE).
+  app.use(express.json({ limit: "15mb", inflate: false }));
   app.get("/healthz", (_req, res) => res.json({ status: "ok", height }));
 
   app.post(
@@ -1374,6 +1377,18 @@ const isWebp = (buffer) => {
       return res.send(await database.getPlatformStats());
     })
   );
+
+  // Errors raised before a route runs (malformed JSON, oversized or
+  // compressed bodies) get a short JSON reply instead of Express's default
+  // page, which includes the stack trace outside NODE_ENV=production.
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, _req, res, _next) => {
+    const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
+    if (status === 500) {
+      console.log(err);
+    }
+    res.status(status).json({ error: status === 500 ? "Internal server error" : "Bad request" });
+  });
 
   app.listen(Number(process.env.PORT) || 80, () => {
     console.log("Started");
