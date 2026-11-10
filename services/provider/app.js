@@ -853,8 +853,7 @@ const isWebp = (buffer) => {
     asyncHandler(async (req, res) => {
       const { search } = req.body;
       if (
-        search === null ||
-        search === undefined ||
+        typeof search !== "string" ||
         search.trim() === "" ||
         search.trim().length > 50
       ) {
@@ -1013,8 +1012,7 @@ const isWebp = (buffer) => {
     asyncHandler(async (req, res) => {
       const { search } = req.body;
       if (
-        search === null ||
-        search === undefined ||
+        typeof search !== "string" ||
         search.trim() === "" ||
         search.trim().length > 50
       ) {
@@ -1070,8 +1068,7 @@ const isWebp = (buffer) => {
     asyncHandler(async (req, res) => {
       const { search } = req.body;
       if (
-        search === null ||
-        search === undefined ||
+        typeof search !== "string" ||
         search.trim() === "" ||
         search.trim().length > 50
       ) {

@@ -115,3 +115,17 @@ test('rejects nested transactions', async () => {
     /Nested database transactions/
   );
 });
+
+test('search queries return no results for a search that is not a string', async () => {
+  const searchFunctions = [
+    database.queryProfileBySearch,
+    database.queryCollectionBySearch,
+    database.queryNftBySearch,
+  ];
+  for (const searchFunction of searchFunctions) {
+    for (const search of [['dingo'], { length: 1 }, 42, true]) {
+      assert.deepEqual(await searchFunction(search), [], `${searchFunction.name}(${JSON.stringify(search)})`);
+    }
+  }
+  assert.deepEqual(log, []);
+});

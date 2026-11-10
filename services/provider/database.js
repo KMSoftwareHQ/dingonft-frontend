@@ -285,7 +285,7 @@ function setProfile(profile) {
 async function queryProfileBySearch(search) {
   debug(`queryProfilenBySearch`);
   
-  if (search === null || search === undefined || search.trim() === '' || search.trim().length > 50) {
+  if (typeof search !== 'string' || search.trim() === '' || search.trim().length > 50) {
     return [];
   }
 
@@ -304,7 +304,7 @@ async function queryProfileByTradeCount() {
 async function queryProfileBy(search) {
   debug(`queryProfilenBySearch`);
   
-  if (search === null || search === undefined || search.trim() === '' || search.trim().length > 50) {
+  if (typeof search !== 'string' || search.trim() === '' || search.trim().length > 50) {
     return [];
   }
 
@@ -371,7 +371,7 @@ async function queryCollectionByOwner(owner) {
 async function queryCollectionBySearch(search) {
   debug(`queryCollectionBySearch`);
   
-  if (search === null || search === undefined || search.trim() === '' || search.trim().length > 50) {
+  if (typeof search !== 'string' || search.trim() === '' || search.trim().length > 50) {
     return [];
   }
 
@@ -555,7 +555,7 @@ async function queryNft(key, direction, offset, limit) {
 async function queryNftBySearch(search) {
   debug(`queryNftBySearch`);
 
-  if (search === null || search === undefined || search.trim() === '' || search.trim().length > 50) {
+  if (typeof search !== 'string' || search.trim() === '' || search.trim().length > 50) {
     return [];
   }
 
