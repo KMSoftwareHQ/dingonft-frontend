@@ -6,6 +6,7 @@
   },
   "scripts": {
     "start": "node app.js",
+    "test": "node --test",
     "dev": "NODE_ENV=development node --watch app.js",
     "dev:fixtures": "python3 dev/generate-fixtures.py"
   },

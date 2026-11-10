@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "docker compose up --build",
     "dev:down": "docker compose down",
-    "test": "npm --prefix apps/frontend test && npm --prefix services/provider test",
+    "test": "npm --prefix apps/frontend test && npm --prefix services/link test && npm --prefix services/provider test",
     "lint": "npm --prefix apps/frontend run lint",
     "build": "npm --prefix apps/frontend run build",
     "test:e2e": "sh scripts/e2e.sh"

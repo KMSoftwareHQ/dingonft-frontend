@@ -18,6 +18,7 @@ const {
   FETCH_TIMEOUT_MS,
 } = require("./config");
 const { createAllowlist } = require("./allowlist");
+const { upstreamUrl } = require("./upstream-url");
 
 const INDEX_PATH = path.join(BUILD_DIR, 'index.html');
 const NOT_FOUND_PAGE = fs.readFileSync(path.join(__dirname, 'not-found.html'), 'utf8');
@@ -87,11 +88,11 @@ const isFrontendPath = (urlPath) =>
   /\.[A-Za-z0-9]+$/.test(urlPath) || /^\/(storage\/|@|__vite|node_modules\/|src\/)/.test(urlPath);
 
 const proxyFrontend = (req, res) =>
-  proxyRequest(new URL(req.originalUrl, `${FRONTEND_URL}/`), req, res);
+  proxyRequest(upstreamUrl(FRONTEND_URL, req.originalUrl), req, res);
 
 // Same-origin API: <BASE_PATH>/api/<route> -> <API_PROXY_URL>/<route>.
 const proxyApi = (req, res) =>
-  proxyRequest(new URL(req.url.replace(/^\/+/, ''), `${API_PROXY_URL}/`), req, res);
+  proxyRequest(upstreamUrl(API_PROXY_URL, req.url), req, res);
 
 const proxyRequest = async (target, req, res) => {
   const headers = { ...req.headers, host: target.host };
@@ -132,6 +133,12 @@ function asyncHandler(fn) {
     try {
       return await fn(req, res);
     } catch (err) {
+      if (err.status >= 400 && err.status < 500) {
+        if (!res.headersSent) {
+          res.status(err.status).json({ error: "Bad request" });
+        }
+        return;
+      }
       console.log(`>>>>> ERROR START [${new Date().toUTCString()}] >>>>>\n`);
       console.log(err);
       console.log("<<<<<< ERROR END <<<<<<\n");
