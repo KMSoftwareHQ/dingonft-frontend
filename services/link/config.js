@@ -36,6 +36,10 @@ const config = {
   FRONTEND_URL: process.env.FRONTEND_URL || "",
   // Optional second frontend (apps/frontend-v2), served at <BASE_PATH>/v2/.
   FRONTEND_V2_URL: process.env.FRONTEND_V2_URL || "",
+  // Optional previous frontend (apps/frontend), served at <BASE_PATH>/v1/ once
+  // FRONTEND_URL points at the redesigned one. With this set and
+  // FRONTEND_V2_URL unset, /v2/ links redirect to the same page at the root.
+  FRONTEND_V1_URL: process.env.FRONTEND_V1_URL || "",
   // When set, <BASE_PATH>/api/* is proxied to the provider so the browser can
   // use a same-origin API (production sets VITE_API_URL=/api).
   // Comma-separated IPs/CIDRs. When set, every route except /healthz returns

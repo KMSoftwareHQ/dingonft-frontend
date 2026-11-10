@@ -2,8 +2,9 @@
 
 A rebuild of `apps/frontend` with feature parity: browsing, search, NFT,
 collection, and profile pages, creating NFTs, buying, lowering prices,
-downloading originals, and editing profiles and collections. It is served under
-`/v2/` so it can run beside the current site.
+downloading originals, and editing profiles and collections. Production serves
+it at the root, with `apps/frontend` kept at `/v1/`; dev serves it under `/v2/`
+beside `apps/frontend`.
 
 React 19, React Router 7, and Vite 8 on Node 24; no UI framework. Styles are
 plain CSS on design tokens (`src/styles/tokens.css`) with light and dark themes.
@@ -77,9 +78,12 @@ npm run build   # production build into dist/
   `{ error }`; `http.js` turns that into a thrown `ApiError`.
 - **Routes** match the current site's paths (`/nft/:address`,
   `/collection/:handle`, `/profile/:address[/owned|/stats]`, ...), so links and
-  the link service's Open Graph rendering carry over under `/v2`.
+  the link service's Open Graph rendering work at any prefix.
 
 ## Production
 
-`Dockerfile` builds the app with `BASE_PATH=/v2/` and serves it from nginx at
-`/v2/`. It isn't wired into `compose.prod.yaml` or the link service yet.
+`Dockerfile` builds the app for the `BASE_PATH` build argument (default `/v2/`)
+and serves it from nginx at that path. `compose.prod.yaml` builds it with
+`BASE_PATH=/` as the link service's `FRONTEND_URL`, and builds `apps/frontend`
+with `BASE_PATH=/v1/` as `FRONTEND_V1_URL`. Old `/v2/` links redirect to the
+same page at the root.

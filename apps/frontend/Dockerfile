@@ -1,5 +1,5 @@
-# Production image: static Vite build served by nginx. The link service in
-# front of it fills the Open Graph placeholders in index.html.
+# Production image: static Vite build served by nginx under BASE_PATH (default /).
+# The link service in front of it fills the Open Graph placeholders in index.html.
 FROM node:24.22.1-bookworm-slim AS build
 WORKDIR /app
 RUN npm install --global npm@12.2.0
@@ -7,6 +7,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 ARG BASE_PATH=/
+# Used as a URL path and in the nginx config: "/" or "/segment/.../".
+RUN echo "$BASE_PATH" | grep -Eqx '/([A-Za-z0-9_-]+/)*' \
+ || { echo "BASE_PATH must be / or /name/ (letters, digits, _ and -): $BASE_PATH" >&2; exit 1; }
 ARG VITE_API_URL=/api
 ARG VITE_STORAGE_BASE=
 ARG VITE_STORAGE_BUCKET_PREFIX=dingo-nftc-0-
@@ -17,6 +20,10 @@ ENV BASE_PATH=$BASE_PATH \
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine
+ARG BASE_PATH=/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html$BASE_PATH
+USER root
+RUN sed -i "s#@BASE_PATH@#$BASE_PATH#g" /etc/nginx/conf.d/default.conf
+USER nginx
 EXPOSE 8080

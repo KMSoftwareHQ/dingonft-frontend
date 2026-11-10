@@ -6,7 +6,7 @@ This is the Dingocoin NFT monorepo. Keep the three runtime components as
 independently deployable containers:
 
 - `apps/frontend` — React 19/Vite 8 frontend
-- `apps/frontend-v2` — redesigned frontend under `/v2/`, full parity with `apps/frontend`; dev runs on fake data from `apps/frontend-v2/mock` at http://localhost:3022/testing-nft-platform/v2/ (see `apps/frontend-v2/README.md`)
+- `apps/frontend-v2` — redesigned frontend; production serves it at `/` and `apps/frontend` at `/v1/` (see `compose.prod.yaml`); dev serves it under `/v2/`. Full parity with `apps/frontend`; dev runs on fake data from `apps/frontend-v2/mock` at http://localhost:3022/testing-nft-platform/v2/ (see `apps/frontend-v2/README.md`)
 - `services/link` — Express edge and Open Graph renderer
 - `services/provider` — Express API and Dingocoin chain indexer
 - `e2e` — deterministic API fixture and Playwright browser tests

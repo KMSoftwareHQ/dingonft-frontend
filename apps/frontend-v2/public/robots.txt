@@ -1,0 +1,17 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /collections
+Disallow: /collections/*
+Disallow: /collection
+Disallow: /collection/*
+Disallow: /nfts
+Disallow: /nfts/*
+Disallow: /nft
+Disallow: /nft/*
+Disallow: /profiles
+Disallow: /profiles/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /search
+Disallow: /search/*
+Sitemap: https://nft.dingocoin.com/sitemap.xml

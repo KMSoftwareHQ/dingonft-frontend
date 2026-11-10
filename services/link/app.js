@@ -14,6 +14,7 @@ const {
   BASE_PATH,
   FRONTEND_URL,
   FRONTEND_V2_URL,
+  FRONTEND_V1_URL,
   API_PROXY_URL,
   ALLOWED_IPS,
   V2_ALLOWED_IPS,
@@ -136,7 +137,8 @@ const proxyRequest = async (target, req, res) => {
 // frontend. Both frontends use the same app paths and the same /api.
 const createSiteRouter = (site) => {
   const router = express.Router();
-  // v2 duplicates every page of the main site; keep it out of search results.
+  // A frontend under a prefix (/v1 or /v2) duplicates every page of the main
+  // site; keep it out of search results.
   if (site.prefix) {
     router.use((_req, res, next) => {
       res.set('X-Robots-Tag', 'noindex');
@@ -214,6 +216,15 @@ const createSiteRouter = (site) => {
   return router;
 };
 
+// Old /v2/ links once the redesigned frontend serves the root: same page and
+// query, without the prefix. Leading slashes and backslashes are collapsed so
+// "/v2//other.host" can't become a redirect to another site.
+const redirectV2ToRoot = (req, res) => {
+  const queryStart = req.originalUrl.indexOf('?');
+  const query = queryStart === -1 ? '' : req.originalUrl.slice(queryStart);
+  res.redirect(302, `${BASE_PATH}/${req.path.replace(/^[/\\]+/, '')}${query}`);
+};
+
 function asyncHandler(fn) {
   return async function (req, res) {
     try {
@@ -255,6 +266,14 @@ function asyncHandler(fn) {
       router.use('/v2', v2Allowlist);
     }
     router.use('/v2', createSiteRouter({ frontendUrl: FRONTEND_V2_URL, prefix: '/v2', image: `${ROOT_PATH}/v2/og-image.jpg` }));
+  }
+  // The previous frontend at <BASE_PATH>/v1/, kept as a fallback after the
+  // redesigned one moved to the root; old /v2/ links then go to the root.
+  if (FRONTEND_V1_URL) {
+    router.use('/v1', createSiteRouter({ frontendUrl: FRONTEND_V1_URL, prefix: '/v1', image: `${ROOT_PATH}/v1/dingocoin.png` }));
+    if (!FRONTEND_V2_URL) {
+      router.use('/v2', redirectV2ToRoot);
+    }
   }
   router.use(createSiteRouter({ frontendUrl: FRONTEND_URL, prefix: '', image: LOGO }));
   app.use(BASE_PATH || '/', router);

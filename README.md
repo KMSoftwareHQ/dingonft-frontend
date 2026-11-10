@@ -4,7 +4,7 @@ This monorepo contains the three deployable parts of the Dingocoin NFT
 platform:
 
 - `apps/frontend` — React/Vite browser application
-- `apps/frontend-v2` — redesigned frontend, served under `/v2/` (see its README)
+- `apps/frontend-v2` — redesigned frontend; the main site in production, with `apps/frontend` kept at `/v1/`. Dev serves it under `/v2/` (see its README)
 - `services/link` — public edge server and Open Graph renderer
 - `services/provider` — API and blockchain indexer
 
